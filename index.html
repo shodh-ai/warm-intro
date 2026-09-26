@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f7f3" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="description" content="Turn a personal note into a thoughtful warm introduction. Review every email before it leaves your drafts." />
+  <title>Warm Intro · Shodh AI</title>
+  <link rel="icon" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <a class="skip-link" href="#workspace">Skip to introductions</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Warm Intro home"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>Warm Intro<span class="brand-by">BY SHODH AI</span></span></a>
+      <div class="topbar-actions"><span id="modeBadge" class="mode-badge">Connecting…</span><button id="settingsBtn" class="settings-btn" aria-label="Open settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg><span>Settings</span></button><span class="user-avatar" aria-label="Arun">A</span></div>
+    </header>
+    <main>
+      <section class="welcome">
+        <div><div class="eyebrow">A LITTLE PERSONAL GOES A LONG WAY</div><h1>Good people. <em>Great connections.</em></h1><p class="muted">Your words, a thoughtful introduction, and a new possibility.</p></div>
+        <div class="welcome-note"><span aria-hidden="true">↗</span>Made personal.<br>Sent by you.</div>
+      </section>
+      <section id="statusBanner" class="status-banner hidden" role="status" aria-live="polite"></section>
+      <section id="loadingState" class="loading-state" role="status"><span class="loading-dot"></span>Getting your introductions ready…</section>
+      <section id="unlockCard" class="card unlock-card hidden">
+        <div class="eyebrow">YOUR PRIVATE WORKSPACE</div><h2>Welcome back, Arun.</h2><p class="muted">Enter your access code to open your introductions.</p>
+        <form id="unlockForm" class="stack"><label for="accessCode">Access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password" placeholder="Enter your access code" required /><button class="primary-btn" type="submit">Open workspace <span aria-hidden="true">↗</span></button></form>
+      </section>
+      <div id="workspace" class="workspace hidden" tabindex="-1">
+        <aside class="queue-panel" aria-label="Introduction queue">
+          <div class="queue-title"><h2>Your introductions</h2><span id="queueCount" class="count-badge">0</span></div><p class="muted small">One thoughtful connection at a time.</p>
+          <div class="progress-wrap" aria-label="Progress"><div class="progress-meta"><span id="progressText">0 of 0 completed</span><span id="progressPercent">0%</span></div><div id="progressTrack" class="progress-track" role="progressbar" aria-label="Introductions completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progressBar" class="progress-bar"></div></div><span id="remainingText" class="small muted">Loading…</span></div>
+          <div id="contactQueue" class="contact-queue"></div>
+          <div class="queue-tip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z"/></svg><strong>A familiar voice opens doors.</strong><p>A few honest lines about why you thought of someone are all it takes.</p></div>
+          <button id="resetDemoBtn" class="text-btn hidden" type="button">Reset sample introductions</button>
+        </aside>
+        <div class="main-column">
+          <section id="contactCard" class="card contact-card hidden" aria-label="Current introduction">
+            <div class="card-kicker"><span>LET’S MAKE AN INTRODUCTION</span><span id="contactPosition"></span></div>
+            <div class="contact-header"><div class="avatar" id="avatar" aria-hidden="true">A</div><div class="contact-copy"><h2 id="contactName">Contact</h2><div id="contactCompany" class="company">Company</div></div><span id="contactStatus" class="pill">Needs your note</span></div>
+            <div class="context-grid"><div class="context-item"><div class="context-label">THE OPPORTUNITY</div><div id="introReason" class="context-value">—</div></div><div class="context-item"><div class="context-label">A LITTLE CONTEXT</div><div id="arunContext" class="context-value">—</div></div></div>
+            <ol class="workflow" aria-label="Introduction steps"><li id="stepNote" class="active" aria-current="step"><span>1</span>Your note</li><li id="stepReview"><span>2</span>Review</li><li id="stepDraft"><span>3</span>Draft</li></ol>
+            <div id="voiceZone" class="voice-zone"><div class="voice-copy"><div class="eyebrow">START WITH YOUR WORDS</div><h3>What would you say?</h3><p id="liveHint" class="live-hint" aria-live="polite">Share why you’d like to connect them.<br>Two or three natural lines are perfect.</p><button id="typeNoteBtn" class="text-btn" type="button">Or type your note <span aria-hidden="true">↗</span></button></div><button id="micBtn" class="mic-btn" type="button" aria-label="Start recording" aria-pressed="false"><span id="micIcon" class="mic-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span><span id="micLabel" class="mic-label">Tap to speak</span><span id="timer" class="timer hidden">00:00</span></button></div>
+            <div id="transcriptSection" class="editor-section hidden"><div class="section-head"><label for="transcript">Your words</label><button id="redoBtn" class="text-btn" type="button">Record again</button></div><textarea id="transcript" class="textarea" rows="4" placeholder="I thought of you because…"></textarea><button id="cleanBtn" class="secondary-btn full-btn" type="button">Polish my note <span aria-hidden="true">↗</span></button></div>
+            <div id="cleanedSection" class="editor-section hidden"><div class="section-head"><label for="cleanedNote">Make it yours</label><span id="cleanBadge" class="ai-badge">Ready to review</span></div><textarea id="cleanedNote" class="textarea approved" rows="4"></textarea><p class="small muted editor-help">Give it a read. You can edit every word.</p><div class="two-actions"><button id="useNoteBtn" class="primary-btn" type="button">Use this note <span aria-hidden="true">→</span></button><button id="editNoteBtn" class="secondary-btn" type="button">Keep editing</button></div></div>
+            <div id="emailSection" class="editor-section hidden"><div class="section-head"><span>Your introduction</span><button id="previewToggle" class="text-btn" type="button" aria-expanded="true" aria-controls="emailPreview">Hide preview</button></div><div id="emailPreview" class="email-preview"><div class="mail-row"><span>To</span><strong id="emailTo">—</strong></div><div class="mail-row"><span>Subject</span><strong id="emailSubject">—</strong></div><div id="emailBody" class="email-body"></div></div><button id="draftBtn" class="primary-btn draft-btn" type="button">Create Gmail draft <span aria-hidden="true">↗</span></button><p id="draftHint" class="small muted draft-hint">Saved as a draft. You decide when to send.</p></div>
+            <div id="draftSuccess" class="success-panel hidden" role="status"><div class="success-icon" aria-hidden="true">✓</div><div><strong id="successTitle">Draft created</strong><div id="successMessage" class="small muted">Ready in Gmail for your final review.</div></div><a id="openGmailBtn" class="secondary-btn link-btn" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail ↗</a></div>
+            <div class="nav-actions"><button id="skipBtn" class="text-btn" type="button">Skip for now</button><button id="nextBtn" class="ghost-btn" type="button">Next person <span aria-hidden="true">→</span></button></div>
+          </section>
+          <section id="emptyState" class="card empty-state hidden"><div class="big-check" aria-hidden="true">✓</div><div class="eyebrow">A LITTLE MOMENTUM</div><h2>You’re all caught up.</h2><p class="muted">Every introduction has its next step.<br>Come back when there’s someone new to connect.</p><button id="emptyResetBtn" class="secondary-btn hidden" type="button">Try the sample queue again</button></section>
+          <div class="privacy-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg>Always personal. Nothing is sent automatically.</div>
+        </div>
+      </div>
+      <footer class="page-footer"><span>Small gestures. Meaningful connections.</span><span>WARM INTRO <span class="footer-dot">·</span> SHODH AI</span></footer>
+    </main>
+  </div>
+  <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="settingsDrawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true" inert>
+    <div class="drawer-head"><div><div class="eyebrow">YOUR WORKSPACE</div><h2 id="settingsTitle">Connections</h2></div><button id="closeSettings" class="icon-btn" aria-label="Close settings">✕</button></div>
+    <div class="settings-block"><div class="settings-row"><div><strong>Google account</strong><div id="googleStatus" class="muted small">Checking…</div></div><a id="googleConnectBtn" class="secondary-btn link-btn" href="/api/google/start">Connect</a></div><button id="createSheetBtn" class="secondary-btn full-btn" type="button">Create intro tracker sheet</button><a id="sheetLink" class="sheet-link hidden" target="_blank" rel="noopener">Open tracker in Google Sheets ↗</a></div>
+    <div class="settings-block"><strong>A thoughtful intro in three steps</strong><ol class="mini-steps"><li>Record or type a short personal note.</li><li>Review your note and the full introduction.</li><li>Create a draft, then send it from Gmail.</li></ol></div>
+    <div class="settings-block subtle"><strong id="settingsModeTitle">Try it with sample contacts</strong><p id="settingsModeDescription" class="muted small">Demo drafts stay in this browser. Connect Google and a tracker to create real Gmail drafts.</p></div>
+    <p class="small muted">Your Google connection keeps your tracker and drafts together. You’re always in control of what gets sent.</p>
+  </aside>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
