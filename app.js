@@ -20,7 +20,6 @@ const state = {
   localPreview: false, notes: new Map(), audioContext: null, levelTimer: null, recordingUrl: null, recordingFileName: 'intro.webm', heardAudio: false
 };
 const MIC_ICON = $('micIcon').innerHTML;
-const NOTE_HINT = 'Speak in English, Hindi or Hinglish. Your words will appear in English after you stop.';
 const DEMO_KEY = 'arun-intro-demo-contacts';
 function show(el, yes = true) { el.classList.toggle('hidden', !yes); }
 function banner(message, type = '') {
@@ -97,7 +96,6 @@ function resetComposer() {
   show($('voiceZone'), true); show($('openGmailBtn'), state.mode === 'google');
   $('micBtn').classList.remove('recording'); $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Tap to speak'; show($('timer'), false);
-  $('liveHint').classList.remove('live-transcript'); $('liveHint').textContent = NOTE_HINT;
   $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗';
   $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Your words come first, followed by Arun’s introduction and Arastu’s company note. Nothing is sent.';
   setStep(0); setBusy(false);
@@ -214,7 +212,6 @@ async function startRecording() {
     state.recording = true; state.startedAt = Date.now(); setStep(0); setBusy(true);
     $('micBtn').setAttribute('aria-label', 'Stop recording'); $('micBtn').setAttribute('aria-pressed', 'true');
     $('micBtn').classList.add('recording'); $('micIcon').textContent = '■'; $('micLabel').textContent = 'Tap to stop'; show($('timer'), true);
-    $('liveHint').textContent = 'Listening… your English transcript will appear when you stop.';
     state.timerId = setInterval(updateTimer, 250); updateTimer();
     show($('transcriptSection'), true);
     recordingStatus('Recording… tap the microphone again when you’re finished.');
@@ -272,7 +269,7 @@ function releaseRecording() {
   $('micBtn').classList.remove('recording');
   $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Record again';
-  show($('timer'), false); $('liveHint').textContent = NOTE_HINT;
+  show($('timer'), false);
 }
 async function transcribeRecording(blob, filename) {
   if (!blob?.size) throw new Error('No audio was captured. Check microphone access or upload an audio file.');

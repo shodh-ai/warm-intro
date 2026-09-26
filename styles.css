@@ -1580,3 +1580,8 @@ a[aria-disabled="true"] {
   .privacy-note { margin-bottom: calc(18px + env(safe-area-inset-bottom)); }
   .voice-zone { scroll-margin-top: 16px; }
 }
+
+/* Keep the recording area focused on its two actions. */
+.voice-zone { flex-direction: column-reverse; justify-content: center; gap: 14px; padding: 24px 18px 16px; }
+.voice-copy { flex: 0 0 auto; text-align: center; }
+.voice-copy .text-btn { margin-top: 0; }
