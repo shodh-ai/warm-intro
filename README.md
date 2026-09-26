@@ -143,7 +143,7 @@ Supported subject variables:
 
 ## Demo mode
 
-Run `npm run dev` and open `http://localhost:4173` for a dependency-free static preview. Local preview uses sample contacts and supports the full typed-note → review → preview → save-demo-draft flow. Microphone transcription requires the hosted API. Demo drafts are explicitly labeled and stored only in the current browser.
+With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real note cleanup and transcription. Without Google credentials, contacts and drafts remain demo-only. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
 
 On the hosted app, the backend selects demo mode when Google or a tracker is not connected. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. Use **Reset sample introductions** (or the reset button after finishing the queue on mobile) to restart the demo.
 
@@ -156,3 +156,7 @@ Notes are retained while switching contacts during the current page session. Set
 - light note cleanup: `gpt-5.6-luna`
 
 Override these with environment variables if needed.
+
+## Local checks
+
+Run `npm test` to check local API routing, private-file isolation, request validation, and cross-origin rejection. Never commit `.env.local` or place API keys in browser code. Hosted deployments require their own environment variables; local secrets are not uploaded by Git.

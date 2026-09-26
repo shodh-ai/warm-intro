@@ -318,8 +318,11 @@ async function cleanNote() {
   try {
     let text = transcript, polished = false;
     if (!state.localPreview) {
-      try { const result = await api('/api/clean', { method: 'POST', body: { transcript, contact: currentContact() } }); if (result.text?.trim()) { text = result.text.trim(); polished = true; } }
-      catch { banner('Note cleanup is unavailable. Your original words are ready to review.'); }
+      try { const result = await api('/api/clean', { method: 'POST', body: { transcript, contact: currentContact() } }); if (result.text?.trim()) { text = result.text.trim(); polished = !result.fallback; } }
+      catch (error) {
+        const noCredits = /no credits|insufficient.quota|exceeded.*quota/i.test(error.message);
+        banner(noCredits ? 'OpenAI API credits are exhausted. Add credits to enable note cleanup. Your original words are ready to review.' : 'Note cleanup is unavailable. Your original words are ready to review.');
+      }
     }
     $('cleanedNote').value = text;
     $('cleanBadge').textContent = polished ? 'Lightly polished' : 'Your original words';
