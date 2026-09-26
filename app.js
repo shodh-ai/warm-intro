@@ -92,7 +92,7 @@ function saveComposer() {
 function resetComposer() {
   clearRecordingPreview();
   recordingStatus(''); show($('recordingMeter'), false);
-  $('transcript').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = '';
+  $('transcript').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = ''; show($('emailAttachment'), false);
   ['transcriptSection','emailSection','draftSuccess'].forEach(id => show($(id), false));
   $('emailSection').open = false;
   show($('voiceZone'), true); show($('openGmailBtn'), state.mode === 'google'); show($('gmailWebBtn'), false); show($('gmailAppHint'), false);
@@ -426,7 +426,7 @@ async function retryRecording() {
 
 function localPreview(contact, cleanedNote) {
   const subject = state.settings.email_subject.replaceAll('{{FirstName}}', firstName(contact.name)).replaceAll('{{Name}}', contact.name || '').replaceAll('{{Company}}', contact.company || '');
-  const body = [`Hi ${firstName(contact.name)},`, cleanedNote, state.settings.fixed_template, state.settings.signature, state.settings.founder_note ? `---------- Forwarded message ---------\n\n${state.settings.founder_note}` : '', state.settings.deck_url ? `Company deck: ${state.settings.deck_url}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
+  const body = [`Hi ${firstName(contact.name)},`, cleanedNote, contact.layout === 'simple' ? contact.template : state.settings.fixed_template, state.settings.signature, state.settings.founder_note ? `---------- Forwarded message ---------\n\n${state.settings.founder_note}` : '', state.settings.deck_url ? `Company deck: ${state.settings.deck_url}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
   return { subject, body };
 }
 async function createDraft() {
@@ -456,6 +456,8 @@ async function createDraft() {
       show($('gmailWebBtn'), gmail.mobile); show($('gmailAppHint'), gmail.mobile);
       $('gmailAppHint').textContent = `In Gmail, select ${state.google?.email || 'your connected account'} and open Drafts. If the app does not open, use Gmail in browser.`;
       $('emailTo').textContent = result.recipient || 'Add recipient in Gmail';
+      $('emailAttachment').textContent = result.attachment ? `Attached: ${result.attachment.name}` : '';
+      show($('emailAttachment'), Boolean(result.attachment));
       show($('openGmailBtn'), true);
     } else { Object.assign(c, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' }); persistDemo(); show($('openGmailBtn'), false); show($('gmailWebBtn'), false); show($('gmailAppHint'), false); }
     $('contactStatus').textContent = state.mode === 'demo' ? 'Demo draft saved' : 'Draft ready';

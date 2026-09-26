@@ -1,3 +1,4 @@
+import { HEADERS } from '../api/_lib/data.js';
 import test, { afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import appData from '../api/app-data.js';
@@ -17,7 +18,7 @@ function setup({registryError,settings = []} = {}) {
     if(url.includes('oauth2.googleapis.com')) return Response.json({access_token:'test'});
     const decoded=decodeURIComponent(url);
     if(decoded.includes('Companies!')) return registryError ? Response.json({error:{message:registryError}},{status:403}) : Response.json({values:[['Other Company','other','Other introductions']]});
-    if(decoded.includes('/other/values/Contacts!') && options.method!=='PUT') return Response.json({values:[['Person','Recipient Co','','Introduction','Context']]});
+    if(decoded.includes('/other/values/Contacts?') && options.method!=='PUT') return Response.json({values:[HEADERS,['Person','Recipient Co','','Introduction','Context']]});
     if(decoded.includes('/other/values/Settings!')) return Response.json({values:settings});
     if(url.includes('gmail.googleapis.com')) return Response.json({id:'draft-test'});
     if(options.method==='PUT' && decoded.includes('/other/values/Contacts!')) return Response.json({updatedRows:1});

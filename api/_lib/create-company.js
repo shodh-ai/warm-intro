@@ -1,6 +1,6 @@
 import { googleFetch } from './google.js';
 import { getCompanies, registrySheetId, companyDefaults } from './companies.js';
-import { HEADERS } from './data.js';
+import { SIMPLE_HEADERS as HEADERS } from './data.js';
 import { encryptJson, decryptJson } from './security.js';
 
 const cell = value => ({ userEnteredValue: { stringValue: String(value) } });
@@ -9,16 +9,16 @@ const formulaRow = formula => ({ values: [{ userEnteredValue: { formulaValue: fo
 export function companySpreadsheet(name) {
   const settings = companyDefaults({ id: '__new__', name }, {sheetId:'__registry__'});
   const sheets = [
-    { title:'Contacts', rows:[row(HEADERS)], columns:14 },
-    { title:'Arun - Action Needed', rows:[row(HEADERS),formulaRow('=IFERROR(FILTER(Contacts!A2:N,(Contacts!A2:A<>"")*((Contacts!H2:H="Need Arun Note")+(Contacts!H2:H=""))),"")')], columns:14 },
+    { title:'Contacts', rows:[row(HEADERS)], columns:16 },
+    { title:'Arun - Action Needed', rows:[row(HEADERS),formulaRow('=IFERROR(FILTER(Contacts!A2:P,(Contacts!A2:A<>"")*((Contacts!J2:J="Need Arun Note")+(Contacts!J2:J=""))),"")')], columns:16 },
     { title:'Dashboard', rows:[row(['Metric','Count']),...[
-      ['Total','=COUNTA(Contacts!A2:A)'],['Need Arun Note','=COUNTIF(Contacts!H2:H,"Need Arun Note")'],['Draft Ready','=COUNTIF(Contacts!H2:H,"Draft Ready")'],['Sent','=COUNTIF(Contacts!H2:H,"Sent")'],['Replied','=COUNTIF(Contacts!H2:H,"Replied")'],['Meeting Booked','=COUNTIF(Contacts!H2:H,"Meeting Booked")'],['Skipped','=COUNTIF(Contacts!H2:H,"Skipped")'],['Follow-ups due','=COUNTIFS(Contacts!L2:L,"<="&TODAY(),Contacts!L2:L,"<>",Contacts!H2:H,"Sent")']
+      ['Total','=COUNTA(Contacts!A2:A)'],['Need Arun Note','=COUNTIF(Contacts!J2:J,"Need Arun Note")'],['Draft Ready','=COUNTIF(Contacts!J2:J,"Draft Ready")'],['Sent','=COUNTIF(Contacts!J2:J,"Sent")'],['Replied','=COUNTIF(Contacts!J2:J,"Replied")'],['Meeting Booked','=COUNTIF(Contacts!J2:J,"Meeting Booked")'],['Skipped','=COUNTIF(Contacts!J2:J,"Skipped")'],['Follow-ups due','=COUNTIFS(Contacts!N2:N,"<="&TODAY(),Contacts!N2:N,"<>",Contacts!J2:J,"Sent")']
     ].map(([label,formula])=>({values:[cell(label),{userEnteredValue:{formulaValue:formula}}]}))], columns:2 },
     { title:'Settings', rows:[row(['Key','Value']),...Object.entries(settings).map(row)], columns:2 }
   ];
   return {properties:{title:`${name} — Warm Intro Tracker`},sheets:sheets.map((sheet,i)=>({
     properties:{sheetId:i,title:sheet.title,gridProperties:{rowCount:1000,columnCount:sheet.columns,frozenRowCount:1}},
-    data:[{startRow:0,startColumn:0,rowData:sheet.rows.map((r,index)=>({values:r.values.map(c=>({...c,userEnteredFormat:{wrapStrategy:'WRAP',verticalAlignment:'TOP',textFormat:{fontSize:12,...(index===0?{bold:true,foregroundColor:{red:1,green:1,blue:1}}:{})},...(index===0?{backgroundColor:{red:.19,green:.36,blue:.26}}:{})}}))})),columnMetadata:Array.from({length:sheet.columns},(_,col)=>({pixelSize:sheet.title==='Settings'&&col===1?560:col===4?340:200}))}]
+    data:[{startRow:0,startColumn:0,rowData:sheet.rows.map((r,index)=>({values:r.values.map(c=>({...c,userEnteredFormat:{wrapStrategy:'WRAP',verticalAlignment:'TOP',textFormat:{fontSize:12,...(index===0?{bold:true,foregroundColor:{red:1,green:1,blue:1}}:{})},...(index===0?{backgroundColor:{red:.19,green:.36,blue:.26}}:{})}}))})),columnMetadata:Array.from({length:sheet.columns},(_,col)=>({pixelSize:sheet.title==='Settings'&&col===1?560:col===2||col===3?380:240,...(sheet.columns===16&&col>=5?{hiddenByUser:true}:{})}))}]
   }))};
 }
 export async function createCompany(req,res,accessToken,session) {

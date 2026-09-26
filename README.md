@@ -194,3 +194,21 @@ open Google Sheets and use Share to grant the company access. Creation does not
 make the Sheet public or send a message. Company-specific email text starts
 blank, while the contact headers, formulas and Settings keys are prefilled.
 If registration fails after creation, Retry linking reuses that Sheet.
+
+
+### Simple tracker and Drive attachments
+
+The visible Contacts columns are Name, Email address, Context, Template, and
+Attachment (Drive link). Internal tracking columns are hidden to the right.
+A row's Template is inserted verbatim after Arun's approved words and before
+his signature and the forwarded company message. A blank Template adds no
+standard text. Existing older trackers remain supported until migrated.
+
+A file link in Attachment is downloaded using the connected Google account and
+attached as MIME bytes to the Gmail draft. Google Docs, Sheets and Slides are
+exported as PDF; uploaded files retain their type. Limit: 10 MB. Folder links,
+permission errors and oversized files stop creation before Gmail is called.
+Enable Drive API and reconnect Google once to grant `drive.readonly` permission.
+The app downloads only the file selected in that row; it does not list Drive.
+The user must already have download access. Empty attachment cells require no
+Drive access. This does not forward the original Gmail thread or its attachments.

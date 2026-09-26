@@ -1,3 +1,4 @@
+import { HEADERS } from '../api/_lib/data.js';
 import test, { afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import handler from '../api/draft.js';
@@ -22,10 +23,10 @@ function googleMock({ gmailStatus = 200, gmailResult = { id: 'draft-123' }, shee
   mock.method(globalThis, 'fetch', async (url, options = {}) => {
     calls.push({ url, ...options });
     if (url === 'https://oauth2.googleapis.com/token') return Response.json({ access_token: 'mock-access-token' });
-    if (url.includes('/values/Contacts!A2%3AN') && options.method !== 'PUT') {
+    if (url.includes('/values/Contacts?') && options.method !== 'PUT') {
       const row = [...contactRow];
       if (recipient !== undefined) row[2] = recipient;
-      return Response.json({ values: [row] });
+      return Response.json({ values: [HEADERS, row] });
     }
     if (url.includes('/values/Settings!')) return Response.json({ values: [
       ['email_subject', 'Meet the team, {{FirstName}} — {{Company}}'],
@@ -63,7 +64,7 @@ test('creates a Gmail draft using the approved note and Sheet template, then rec
   assert.equal(sheetWrites(calls).length, 1);
   assert.ok(calls.indexOf(write) > calls.indexOf(gmail));
   const row = JSON.parse(write.body).values[0];
-  assert.deepEqual(row.slice(5, 9), [approvedNote, approvedNote, 'Draft Ready', 'draft-123']);
+  assert.deepEqual(row.slice(0, 4), [approvedNote, approvedNote, 'Draft Ready', 'draft-123']);
   assert.ok(!calls.some(call => call.url.includes('/send')));
 });
 
@@ -117,8 +118,8 @@ test('an invalid follow-up setting cannot fail after the draft has been created'
   await handler(request(), res);
   assert.equal(res.statusCode, 200);
   const row = JSON.parse(sheetWrites(calls)[0].body).values[0];
-  const expected = new Date(new Date(row[9]).getTime() + 5 * 86400000).toISOString().slice(0, 10);
-  assert.equal(row[11], expected);
+  const expected = new Date(new Date(row[4]).getTime() + 5 * 86400000).toISOString().slice(0, 10);
+  assert.equal(row[6], expected);
 });
 
 test('malformed Sheet email addresses leave To blank and cannot inject headers', async () => {
@@ -166,7 +167,7 @@ test('a blank contact email creates a recipient-free Gmail draft and updates the
   const raw = Buffer.from(JSON.parse(gmailCalls(calls)[0].body).message.raw, 'base64url').toString('utf8');
   assert.doesNotMatch(raw, /^To:/m);
   assert.ok(raw.includes(approvedNote));
-  assert.equal(JSON.parse(sheetWrites(calls)[0].body).values[0][7], 'Draft Ready');
+  assert.equal(JSON.parse(sheetWrites(calls)[0].body).values[0][2], 'Draft Ready');
   assert.ok(!calls.some(call => call.url.includes('/send')));
 });
 

@@ -20,17 +20,22 @@ export const DEMO_CONTACTS = [
   { rowNumber: 4, name: 'David Chen', company: 'Deeptech Fund', email: 'david@example.com', introReason: 'Fundraising', context: 'You met David through a mutual friend last year.', arunNote: '', cleanedNote: '', status: 'Need Arun Note' }
 ];
 
-export function rowsToContacts(rows) {
-  return rows.map((r, i) => ({
-    rowNumber: i + 2,
-    name: r[0] || '', company: r[1] || '', email: r[2] || '', introReason: r[3] || '', context: r[4] || '',
-    arunNote: r[5] || '', cleanedNote: r[6] || '', status: r[7] || 'Need Arun Note', draftId: r[8] || '', draftCreated: r[9] || '', dateSent: r[10] || '', followupDate: r[11] || '', reply: r[12] || '', notes: r[13] || ''
-  })).filter(c => c.name || c.email);
+export const SIMPLE_HEADERS = ['Name','Email address','Context','Template','Attachment (Drive link)','Company','Intro Reason','Arun Note','Cleaned Note','Status','Draft ID','Draft Created','Date Sent','Follow-up Date','Reply','Notes'];
+export function rowsToContacts(rows, headers = HEADERS) {
+  const simple = headers[3] === 'Template';
+  const keys = simple
+    ? ['name','email','context','template','attachmentUrl','company','introReason','arunNote','cleanedNote','status','draftId','draftCreated','dateSent','followupDate','reply','notes']
+    : ['name','company','email','introReason','context','arunNote','cleanedNote','status','draftId','draftCreated','dateSent','followupDate','reply','notes'];
+  return rows.map((r,i) => {
+    const c = {rowNumber:i+2, layout:simple?'simple':'legacy'};
+    keys.forEach((key,index) => { c[key] = r[index] || ''; });
+    c.status ||= 'Need Arun Note';
+    return c;
+  }).filter(c=>c.name || c.email);
 }
-
 export async function getContacts(accessToken, sheetId) {
-  const rows = await readRange(accessToken, sheetId, 'Contacts!A2:N');
-  return rowsToContacts(rows);
+  const [headers = [], ...rows] = await readRange(accessToken, sheetId, 'Contacts');
+  return rowsToContacts(rows, headers);
 }
 
 export async function getSettings(accessToken, sheetId, defaults = DEFAULT_SETTINGS) {
@@ -42,10 +47,9 @@ export async function getSettings(accessToken, sheetId, defaults = DEFAULT_SETTI
 
 export async function updateContactRow(accessToken, sheetId, rowNumber, patch, current) {
   const c = { ...current, ...patch };
-  const values = [[
-    c.name || '', c.company || '', c.email || '', c.introReason || '', c.context || '', c.arunNote || '', c.cleanedNote || '', c.status || '',
-    c.draftId || '', c.draftCreated || '', c.dateSent || '', c.followupDate || '', c.reply || '', c.notes || ''
-  ]];
-  await writeRange(accessToken, sheetId, `Contacts!A${rowNumber}:N${rowNumber}`, values);
+  const values = [[c.arunNote || '', c.cleanedNote || '', c.status || '', c.draftId || '', c.draftCreated || '', c.dateSent || '', c.followupDate || '', c.reply || '', c.notes || '']];
+  const range = c.layout === 'simple' ? `Contacts!H${rowNumber}:P${rowNumber}` : `Contacts!F${rowNumber}:N${rowNumber}`;
+  // Only update tracking cells; never overwrite the person's editable input columns.
+  await writeRange(accessToken, sheetId, range, values, 'RAW');
   return c;
 }

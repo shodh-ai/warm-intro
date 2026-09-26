@@ -1,3 +1,4 @@
+import { getDriveAttachment, emailMime } from './_lib/attachments.js';
 import { resolveCompany, companyDefaults } from './_lib/companies.js';
 import { accessTokenFromSession, googleFetch } from './_lib/google.js';
 import { getContacts, getSettings, updateContactRow } from './_lib/data.js';
@@ -38,17 +39,13 @@ export default async function handler(req, res) {
     const subject = settings.founder_note && !/^fwd?:/i.test(baseSubject) ? `Fwd: ${baseSubject}` : baseSubject;
     const forwardedFrom = settings.forwarded_from || (companyDefaults(company, session) ? '' : 'Arastu Sharma <arastu@shodh.ai>');
     const forwardedHeader = ['---------- Forwarded message ---------', forwardedFrom ? `From: ${forwardedFrom}` : '', settings.forwarded_to ? `To: ${settings.forwarded_to}` : ''].filter(Boolean).join('\n');
-    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `${forwardedHeader}\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
-    const raw = [
+    const body = [`Hi ${firstName(current.name)},`, cleanedNote, current.layout === 'simple' ? current.template : settings.fixed_template, settings.signature, settings.founder_note ? `${forwardedHeader}\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
+    const attachment = await getDriveAttachment(accessToken, current.attachmentUrl);
+    const raw = emailMime([
       ...(recipient ? [`To: ${recipient}`] : []),
       ...(cc ? [`Cc: ${cc}`] : []),
       `Subject: ${encodeHeader(subject)}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/plain; charset=UTF-8',
-      'Content-Transfer-Encoding: 8bit',
-      '',
-      body
-    ].join('\r\n');
+    ], body, attachment);
 
     const draft = await googleFetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', accessToken, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: { raw: base64url(raw) } })
@@ -58,7 +55,7 @@ export default async function handler(req, res) {
     const configuredDays = Number(settings.followup_days);
     const days = Number.isFinite(configuredDays) && configuredDays >= 1 && configuredDays <= 3650 ? configuredDays : 5;
     const follow = new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10);
-    const result = { draftCreated: true, draftId: draft.id, subject, body, cc, recipient, gmailUrl: 'https://mail.google.com/mail/u/0/#drafts' };
+    const result = { draftCreated: true, draftId: draft.id, subject, body, cc, recipient, attachment: attachment ? {name:attachment.name,size:attachment.size} : null, gmailUrl: 'https://mail.google.com/mail/u/0/#drafts' };
     let updated;
     try {
       updated = await updateContactRow(accessToken, company.id, current.rowNumber, {
@@ -70,6 +67,6 @@ export default async function handler(req, res) {
     }
     res.status(200).json({ ok: true, ...result, trackerUpdated: true, contact: updated });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message });
   }
 }

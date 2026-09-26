@@ -4,7 +4,8 @@ export const GOOGLE_SCOPES = [
   'openid',
   'email',
   'https://www.googleapis.com/auth/gmail.compose',
-  'https://www.googleapis.com/auth/spreadsheets'
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.readonly'
 ].join(' ');
 
 export async function accessTokenFromSession(req, res) {
@@ -60,8 +61,8 @@ export async function readRange(accessToken, sheetId, range) {
   return data.values || [];
 }
 
-export async function writeRange(accessToken, sheetId, range, values) {
-  const u = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+export async function writeRange(accessToken, sheetId, range, values, valueInputOption = 'USER_ENTERED') {
+  const u = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}?valueInputOption=${valueInputOption}`;
   return googleFetch(u, accessToken, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
