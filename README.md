@@ -6,8 +6,7 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 
 - Shows one contact card at a time, with progress and context.
 - Records Arun's voice from the phone microphone.
-- Transcribes English, Hindi and Hinglish with `gpt-transcribe` after he stops speaking.
-- Converts the transcript to English with `gpt-5.6-luna`, preserving meaning and names before showing **Your words**.
+- Converts English, Hindi and Hinglish audio directly to English in one request using the OpenAI audio translations endpoint, preserving meaning and names before showing **Your words**.
 - Uses `gpt-5.6-luna` to lightly clean the 2–3 line note without inventing facts or changing his voice.
 - Combines the personal note with the fixed Shodh email template.
 - Creates a Gmail **draft** (never auto-sends).
@@ -151,11 +150,10 @@ Notes are retained while switching contacts during the current page session. Set
 
 ## Current model defaults
 
-- final transcription: `gpt-transcribe`
-- English transcript translation: `gpt-5.6-luna`
+- audio-to-English translation: `whisper-1` (the audio translations endpoint)
 - light note cleanup: `gpt-5.6-luna`
 
-Override these with environment variables if needed.
+The cleanup model can be overridden with `CLEANUP_MODEL`. Audio translation uses the model supported by the translations endpoint.
 
 ## Local checks
 
