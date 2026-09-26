@@ -61,7 +61,7 @@ Required:
 Recommended:
 
 - `GOOGLE_SHEET_ID` — the existing tracker spreadsheet ID.
-- `ALLOWED_GOOGLE_EMAIL` — set this to Arun's exact Gmail/Google Workspace email so nobody else can connect a Google account.
+- `ALLOWED_GOOGLE_EMAIL` — set this to the permitted Google email addresses, separated by commas.
 - `APP_BASE_URL` — your final URL, for example `https://intro.shodh.ai`.
 
 The model environment variables are optional; current defaults are already in code.

@@ -23,8 +23,9 @@ export default async function handler(req, res) {
 
     const userRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: `Bearer ${token.access_token}` } });
     const user = await userRes.json();
-    const allowed = process.env.ALLOWED_GOOGLE_EMAIL?.trim().toLowerCase();
-    if (allowed && String(user.email || '').toLowerCase() !== allowed) return res.status(403).send('This Google account is not allowed for this app.');
+    if (!userRes.ok || !user.email || user.email_verified !== true) throw new Error('Google could not verify this email address. Please reconnect.');
+    const allowed = (process.env.ALLOWED_GOOGLE_EMAIL || '').split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
+    if (allowed.length && !allowed.includes(String(user.email).toLowerCase())) return res.status(403).send('This Google account is not allowed for this app.');
 
     const previous = decryptJson(cookies.google_session);
     const sheetId = previous?.email === user.email ? previous.sheetId : '';
