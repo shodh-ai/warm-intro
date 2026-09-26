@@ -28,10 +28,15 @@ export default async function handler(req, res) {
     const recipient = current.email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) || recipient.includes('replace-with-your-email')) return res.status(400).json({ error: 'Add a valid recipient email in the tracker before creating a Gmail draft.' });
 
+    const cc = String(settings.cc_email || '').trim();
+    if (cc && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(cc)) return res.status(400).json({ error: 'Add one valid CC email in the tracker Settings, or leave it blank.' });
+    const deck = String(settings.deck_url || '').trim();
+    if (deck && !/^https:\/\/[^\s]+$/i.test(deck)) return res.status(400).json({ error: 'Use an HTTPS deck link in the tracker Settings, or leave it blank.' });
     const subject = subjectFor(settings.email_subject, current);
-    const body = `Hi ${firstName(current.name)},\n\n${cleanedNote}\n\n${settings.fixed_template}\n\n${settings.signature}`.trim();
+    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `More about Shodh — from Arastu:\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
     const raw = [
       `To: ${recipient}`,
+      ...(cc ? [`Cc: ${cc}`] : []),
       `Subject: ${encodeHeader(subject)}`,
       'MIME-Version: 1.0',
       'Content-Type: text/plain; charset=UTF-8',
@@ -48,7 +53,7 @@ export default async function handler(req, res) {
     const configuredDays = Number(settings.followup_days);
     const days = Number.isFinite(configuredDays) && configuredDays >= 1 && configuredDays <= 3650 ? configuredDays : 5;
     const follow = new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10);
-    const result = { draftCreated: true, draftId: draft.id, subject, body, gmailUrl: 'https://mail.google.com/mail/u/0/#drafts' };
+    const result = { draftCreated: true, draftId: draft.id, subject, body, cc, gmailUrl: 'https://mail.google.com/mail/u/0/#drafts' };
     let updated;
     try {
       updated = await updateContactRow(accessToken, session.sheetId, current.rowNumber, {

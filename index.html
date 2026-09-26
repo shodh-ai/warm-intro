@@ -47,7 +47,7 @@
               <div class="section-head"><label for="transcript">Your words <span class="small muted">· English</span></label><button id="redoBtn" class="text-btn" type="button">Record again</button></div>
               <textarea id="transcript" class="textarea" rows="4" placeholder="I thought of you because…" aria-describedby="draftHint"></textarea>
               <button id="draftBtn" class="primary-btn draft-btn" type="button" disabled>OK, create draft <span aria-hidden="true">↗</span></button>
-              <p id="draftHint" class="small muted draft-hint">Read or edit your words, then create a draft with your email template. Nothing is sent.</p>
+              <p id="draftHint" class="small muted draft-hint">Your words come first, followed by Arun’s introduction and Arastu’s company note. Nothing is sent.</p>
               <div class="audio-upload"><label for="audioUpload">Or upload an audio recording</label><input id="audioUpload" type="file" accept="audio/*,.webm,.mp4,.m4a,.wav,.mp3" /></div>
             </div>
             <div id="draftSuccess" class="success-panel hidden" role="status"><div class="success-icon" aria-hidden="true">✓</div><div><strong id="successTitle">Draft created</strong><div id="successMessage" class="small muted">Ready in Gmail for your final review.</div></div><a id="openGmailBtn" class="secondary-btn link-btn" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail ↗</a></div>
@@ -64,7 +64,7 @@
   <aside id="settingsDrawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true" inert>
     <div class="drawer-head"><div><div class="eyebrow">YOUR WORKSPACE</div><h2 id="settingsTitle">Connections</h2></div><button id="closeSettings" class="icon-btn" aria-label="Close settings">✕</button></div>
     <div class="settings-block"><div class="settings-row"><div><strong>Google account</strong><div id="googleStatus" class="muted small">Checking…</div></div><a id="googleConnectBtn" class="secondary-btn link-btn" href="/api/google/start">Connect</a></div><button id="createSheetBtn" class="secondary-btn full-btn" type="button">Create intro tracker sheet</button><a id="sheetLink" class="sheet-link hidden" target="_blank" rel="noopener">Open tracker in Google Sheets ↗</a></div>
-    <div class="settings-block"><strong>Arun’s introduction flow</strong><ol class="mini-steps"><li>Read the person’s details and record your note.</li><li>Review or edit the English text, then tap OK, create draft.</li><li>The note and your email template are saved together in Gmail drafts.</li></ol></div>
+    <div class="settings-block"><strong>Arun’s introduction flow</strong><ol class="mini-steps"><li>Read the person’s details and record your note.</li><li>Review or edit the English text, then tap OK, create draft.</li><li>Your words, Arun’s introduction and Arastu’s company note are saved together in Gmail drafts.</li></ol></div>
     <div class="settings-block subtle"><strong id="settingsModeTitle">Try it with sample contacts</strong><p id="settingsModeDescription" class="muted small">Demo drafts stay in this browser. Connect Google and a tracker to create real Gmail drafts.</p></div>
     <p class="small muted">Your Google connection keeps your tracker and drafts together. You’re always in control of what gets sent.</p>
   </aside>

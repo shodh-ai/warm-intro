@@ -122,6 +122,9 @@ Keys:
 - `email_subject`
 - `fixed_template`
 - `signature`
+- `founder_note` — Arastu’s reusable company note, below Arun’s signature
+- `cc_email` — optional single CC address
+- `deck_url` — optional HTTPS deck link
 - `followup_days`
 
 Supported subject variables:

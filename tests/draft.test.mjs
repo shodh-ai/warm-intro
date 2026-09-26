@@ -17,7 +17,7 @@ function request(body = {}) {
 function response() {
   return { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(value) { this.body = value; }, setHeader() {} };
 }
-function googleMock({ gmailStatus = 200, gmailResult = { id: 'draft-123' }, sheetWriteStatus = 200, recipient, followupDays = '5' } = {}) {
+function googleMock({ gmailStatus = 200, gmailResult = { id: 'draft-123' }, sheetWriteStatus = 200, recipient, followupDays = '5', founderNote = '', cc = '', deck = '' } = {}) {
   const calls = [];
   mock.method(globalThis, 'fetch', async (url, options = {}) => {
     calls.push({ url, ...options });
@@ -29,7 +29,7 @@ function googleMock({ gmailStatus = 200, gmailResult = { id: 'draft-123' }, shee
     }
     if (url.includes('/values/Settings!')) return Response.json({ values: [
       ['email_subject', 'Meet the team, {{FirstName}} — {{Company}}'],
-      ['fixed_template', fixedTemplate], ['signature', 'Best,\nArun Seth'], ['followup_days', followupDays]
+      ['founder_note', founderNote], ['cc_email', cc], ['deck_url', deck], ['fixed_template', fixedTemplate], ['signature', 'Best,\nArun Seth'], ['followup_days', followupDays]
     ] });
     if (url === 'https://gmail.googleapis.com/gmail/v1/users/me/drafts') return Response.json(gmailResult, { status: gmailStatus });
     if (options.method === 'PUT' && url.includes('/values/Contacts!')) return Response.json(sheetWriteStatus === 200 ? { updatedRows: 1 } : { error: { message: 'Sheet unavailable' } }, { status: sheetWriteStatus });
@@ -128,4 +128,25 @@ test('malformed Sheet email addresses cannot inject extra message headers', asyn
   assert.equal(res.statusCode, 400);
   assert.equal(gmailCalls(calls).length, 0);
   assert.equal(sheetWrites(calls).length, 0);
+});
+
+
+test('appends Arastu company note below Arun signature and includes configured CC and deck', async () => {
+  const calls = googleMock({ founderNote: 'Our company note.\nWarm Regards,\nArastu', cc: 'founder@example.com', deck: 'https://example.com/deck' });
+  const res = response();
+  await handler(request(), res);
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.body.indexOf(approvedNote) < res.body.body.indexOf(fixedTemplate));
+  assert.ok(res.body.body.indexOf('Arun Seth') < res.body.body.indexOf('More about Shodh — from Arastu:'));
+  assert.ok(res.body.body.endsWith('Company deck: https://example.com/deck'));
+  const raw = Buffer.from(JSON.parse(gmailCalls(calls)[0].body).message.raw, 'base64url').toString('utf8');
+  assert.match(raw, /\r\nCc: founder@example.com\r\n/);
+});
+
+test('rejects CC header injection before creating any draft', async () => {
+  const calls = googleMock({ cc: 'founder@example.com\r\nBcc: other@example.com' });
+  const res = response();
+  await handler(request(), res);
+  assert.equal(res.statusCode, 400);
+  assert.equal(gmailCalls(calls).length, 0);
 });

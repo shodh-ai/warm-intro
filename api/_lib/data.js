@@ -8,6 +8,9 @@ export const DEFAULT_SETTINGS = {
   email_subject: 'Introduction — Shodh AI × {{FirstName}}',
   fixed_template: `I wanted to introduce you to the team at Shodh AI. They are building Physical Intelligence models for science and industry, with a focus on helping R&D teams reason across molecules, processes and manufacturing conditions.\n\nI thought it could be useful for you to connect with them and hear what they are building directly.`,
   signature: 'Best,\nArun',
+  founder_note: '',
+  cc_email: '',
+  deck_url: '',
   followup_days: '5'
 };
 

@@ -99,7 +99,7 @@ function resetComposer() {
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Tap to speak'; show($('timer'), false);
   $('liveHint').classList.remove('live-transcript'); $('liveHint').textContent = NOTE_HINT;
   $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗';
-  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Read or edit your words, then create a draft with your email template. Nothing is sent.';
+  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Your words come first, followed by Arun’s introduction and Arastu’s company note. Nothing is sent.';
   setStep(0); setBusy(false);
 }
 function renderContact() {
@@ -324,7 +324,7 @@ async function uploadRecording(event) {
 
 function localPreview(contact, cleanedNote) {
   const subject = state.settings.email_subject.replaceAll('{{FirstName}}', firstName(contact.name)).replaceAll('{{Name}}', contact.name || '').replaceAll('{{Company}}', contact.company || '');
-  const body = `Hi ${firstName(contact.name)},\n\n${cleanedNote}\n\n${state.settings.fixed_template}\n\n${state.settings.signature}`.trim();
+  const body = [`Hi ${firstName(contact.name)},`, cleanedNote, state.settings.fixed_template, state.settings.signature, state.settings.founder_note ? `More about Shodh — from Arastu:\n\n${state.settings.founder_note}` : '', state.settings.deck_url ? `Company deck: ${state.settings.deck_url}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
   return { subject, body };
 }
 async function createDraft() {
