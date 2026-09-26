@@ -1,3 +1,4 @@
+import { gmailDestination } from './gmail-navigation.js';
 import { finishRecording, audioLevel } from './audio-recording.js';
 const $ = (id) => document.getElementById(id);
 
@@ -93,7 +94,7 @@ function resetComposer() {
   $('transcript').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = '';
   ['transcriptSection','emailSection','draftSuccess'].forEach(id => show($(id), false));
   $('emailSection').open = false;
-  show($('voiceZone'), true); show($('openGmailBtn'), state.mode === 'google');
+  show($('voiceZone'), true); show($('openGmailBtn'), state.mode === 'google'); show($('gmailWebBtn'), false); show($('gmailAppHint'), false);
   $('micBtn').classList.remove('recording'); $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Tap to speak'; show($('timer'), false);
   $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗';
@@ -349,8 +350,16 @@ async function createDraft() {
       Object.assign(c, result.contact || {}, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' });
       preview = { subject: result.subject ?? preview.subject, body: result.body ?? preview.body };
       if (result.warning) banner(result.warning);
-      $('openGmailBtn').href = result.gmailUrl || 'https://mail.google.com/mail/u/0/#drafts'; show($('openGmailBtn'), true);
-    } else { Object.assign(c, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' }); persistDemo(); show($('openGmailBtn'), false); }
+      const gmail = gmailDestination({ userAgent: navigator.userAgent, platform: navigator.platform, maxTouchPoints: navigator.maxTouchPoints, email: state.google?.email });
+      $('openGmailBtn').href = gmail.appUrl;
+      $('openGmailBtn').target = gmail.mobile ? '_self' : '_blank';
+      $('openGmailBtn').textContent = gmail.mobile ? 'Open Gmail app ↗' : 'Open Gmail ↗';
+      $('gmailWebBtn').href = gmail.webUrl;
+      show($('gmailWebBtn'), gmail.mobile); show($('gmailAppHint'), gmail.mobile);
+      $('gmailAppHint').textContent = `In Gmail, select ${state.google?.email || 'your connected account'} and open Drafts. If the app does not open, use Gmail in browser.`;
+      $('emailTo').textContent = result.recipient || 'Add recipient in Gmail';
+      show($('openGmailBtn'), true);
+    } else { Object.assign(c, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' }); persistDemo(); show($('openGmailBtn'), false); show($('gmailWebBtn'), false); show($('gmailAppHint'), false); }
     $('contactStatus').textContent = state.mode === 'demo' ? 'Demo draft saved' : 'Draft ready';
     $('successTitle').textContent = state.mode === 'demo' ? 'Demo draft saved' : 'Your introduction is ready';
     $('successMessage').textContent = state.mode === 'demo' ? 'Saved in this browser. Nothing was created in Gmail.' : draftWarning || 'Waiting in Gmail for your final review and Send.';

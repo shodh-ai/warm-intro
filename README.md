@@ -8,7 +8,7 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 - Records Arun's voice from the phone microphone.
 - Converts English, Hindi and Hinglish audio directly to English in one request using the OpenAI audio translations endpoint, preserving meaning and names before showing **Your words**.
 - Combines the personal note with the fixed Shodh email template.
-- Creates a Gmail **draft** (never auto-sends). Contact email is optional; leave it blank to add the recipient directly in Gmail.
+- Creates a Gmail **draft** (never auto-sends). Contact email is optional. Blank or invalid addresses leave To empty so the recipient can be added directly in Gmail.
 - Updates the Google Sheet tracker automatically.
 - Installs to a phone home screen as a PWA.
 
@@ -20,7 +20,7 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 4. Watch the microphone-level indicator while speaking. Tap again to stop (or it stops at 90 seconds).
 5. Review or edit the English transcript in **Your words**.
 6. Tap **OK, create draft**. The exact approved text is combined with the Sheet’s email template and saved in Gmail.
-7. Open Gmail to review the draft, or move to the next person.
+7. Open Gmail to review the draft, or move to the next person. On phones, the button attempts to launch Gmail; select the connected account and open Drafts. A separate web link remains available if the browser blocks the app launch.
 
 The app intentionally does **not** make swipe-right send an email. Draft creation requires approving the displayed text.
 

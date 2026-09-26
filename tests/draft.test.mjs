@@ -121,13 +121,15 @@ test('an invalid follow-up setting cannot fail after the draft has been created'
   assert.equal(row[11], expected);
 });
 
-test('malformed Sheet email addresses cannot inject extra message headers', async () => {
+test('malformed Sheet email addresses leave To blank and cannot inject headers', async () => {
   const calls = googleMock({ recipient: 'priya@example.com\r\nBcc: someone@example.com' });
   const res = response();
   await handler(request(), res);
-  assert.equal(res.statusCode, 400);
-  assert.equal(gmailCalls(calls).length, 0);
-  assert.equal(sheetWrites(calls).length, 0);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.recipient, '');
+  const raw = Buffer.from(JSON.parse(gmailCalls(calls)[0].body).message.raw, 'base64url').toString('utf8');
+  assert.doesNotMatch(raw, /^(To|Bcc):/mi);
+  assert.equal(sheetWrites(calls).length, 1);
 });
 
 
@@ -163,4 +165,12 @@ test('a blank contact email creates a recipient-free Gmail draft and updates the
   assert.ok(raw.includes(approvedNote));
   assert.equal(JSON.parse(sheetWrites(calls)[0].body).values[0][7], 'Draft Ready');
   assert.ok(!calls.some(call => call.url.includes('/send')));
+});
+
+
+test('a comma typo in the Sheet email does not block a draft', async () => {
+  const calls = googleMock({recipient: 'darsh@SHODH,AI'});
+  const res = response(); await handler(request(),res);
+  assert.equal(res.statusCode,200); assert.equal(res.body.recipient,'');
+  assert.equal(gmailCalls(calls).length,1);
 });
