@@ -157,11 +157,25 @@ async function loadData() {
   try {
     const data = state.localPreview ? { mode: 'demo', contacts: FALLBACK_CONTACTS.map(c => ({...c})), settings: FALLBACK_SETTINGS } : await api('/api/app-data');
     state.mode = data.mode || 'demo'; state.contacts = data.contacts || []; state.settings = { ...FALLBACK_SETTINGS, ...data.settings }; state.google = data.google || null;
+    const needsConnection = !state.localPreview && state.mode !== 'google';
+    show($('connectionCard'), needsConnection);
+    if (needsConnection) {
+      state.contacts = []; state.selectedId = null;
+      show($('workspace'), false);
+      $('modeBadge').textContent = state.google?.connected ? 'Tracker not connected' : 'Connect Google';
+      $('connectionTitle').textContent = state.google?.connected ? 'Connect your tracker' : 'Connect your Google account';
+      $('connectionMessage').textContent = state.google?.connected ? 'Your Google account is connected. Open Settings to connect your introduction tracker.' : 'Connect Google in this browser to load your Sheet contacts and save drafts in Gmail.';
+      show($('connectWorkspaceBtn'), !state.google?.connected);
+      show($('trackerSettingsBtn'), Boolean(state.google?.connected));
+      $('settingsModeTitle').textContent = 'Your Google workspace';
+      $('settingsModeDescription').textContent = 'Connect Google to use the contacts in your tracker and create Gmail drafts.';
+      return;
+    }
     if (state.mode === 'demo') state.contacts = readDemo() || state.contacts;
     state.selectedId = pendingContacts()[0]?.rowNumber ?? null;
     show($('workspace'), true); renderContact();
   } catch (e) {
-    show($('workspace'), false);
+    show($('workspace'), false); show($('connectionCard'), false);
     if (e.status === 401) { state.authenticated = false; show($('unlockCard'), true); }
     banner('Your introductions could not load. Please refresh or check your Google connection in Settings.', 'error');
   }
@@ -393,6 +407,7 @@ function closeDrawer() {
   show($('drawerBackdrop'), false); document.body.classList.remove('drawer-open');
 }
 $('settingsBtn').addEventListener('click', openDrawer);
+$('trackerSettingsBtn').addEventListener('click', openDrawer);
 $('closeSettings').addEventListener('click', closeDrawer);
 $('drawerBackdrop').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => {

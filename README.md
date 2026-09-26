@@ -143,9 +143,9 @@ Supported subject variables:
 
 ## Demo mode
 
-With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real transcription. Without Google credentials, contacts and drafts remain demo-only. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
+With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real transcription. Without a Google connection, the server asks you to connect Google and shows no sample contacts. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
 
-On the hosted app, the backend selects demo mode when Google or a tracker is not connected. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
+On the hosted app, a missing Google connection or tracker shows a connection screen, never a sample contact list. The private access code and Google connection are separate, and Google must be connected in each browser. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
 
 Notes are retained while switching contacts during the current page session. Settings supports Escape, keyboard focus containment, and focus restoration. The interface respects reduced motion and includes accessible form labels and progress.
 

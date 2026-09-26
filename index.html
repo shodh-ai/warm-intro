@@ -27,6 +27,12 @@
         <div class="eyebrow">YOUR PRIVATE WORKSPACE</div><h2>Welcome back, Arun.</h2><p class="muted">Enter your access code to open your introductions.</p>
         <form id="unlockForm" class="stack"><label for="accessCode">Access code</label><input id="accessCode" class="input" type="password" autocomplete="current-password" placeholder="Enter your access code" required /><button class="primary-btn" type="submit">Open workspace <span aria-hidden="true">↗</span></button></form>
       </section>
+      <section id="connectionCard" class="card unlock-card hidden">
+        <h2 id="connectionTitle">Connect your Google account</h2>
+        <p id="connectionMessage" class="muted">Connect Google in this browser to load your Sheet contacts and save drafts in Gmail.</p>
+        <a id="connectWorkspaceBtn" class="primary-btn link-btn" href="/api/google/start">Connect Google</a>
+        <button id="trackerSettingsBtn" class="primary-btn hidden" type="button">Open tracker settings</button>
+      </section>
       <div id="workspace" class="workspace hidden" tabindex="-1">
         <aside class="queue-panel" aria-label="Introduction queue">
           <div class="queue-title"><h2>Your introductions</h2><span id="queueCount" class="count-badge">0</span></div>

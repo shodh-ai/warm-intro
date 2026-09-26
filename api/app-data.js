@@ -1,5 +1,5 @@
 import { accessTokenFromSession } from './_lib/google.js';
-import { DEFAULT_SETTINGS, DEMO_CONTACTS, getContacts, getSettings } from './_lib/data.js';
+import { DEFAULT_SETTINGS, getContacts, getSettings } from './_lib/data.js';
 import { getGoogleSession, requireAppAuth } from './_lib/security.js';
 
 export default async function handler(req, res) {
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     sheetUrl: session?.sheetId ? `https://docs.google.com/spreadsheets/d/${session.sheetId}/edit` : ''
   };
   if (!session?.refresh_token || !session?.sheetId) {
-    return res.status(200).json({ mode: 'demo', contacts: DEMO_CONTACTS, settings: DEFAULT_SETTINGS, google });
+    return res.status(200).json({ mode: 'setup', contacts: [], settings: DEFAULT_SETTINGS, google });
   }
   try {
     const { accessToken } = await accessTokenFromSession(req, res);
