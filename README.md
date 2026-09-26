@@ -8,7 +8,7 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 - Records Arun's voice from the phone microphone.
 - Converts English, Hindi and Hinglish audio directly to English in one request using the OpenAI audio translations endpoint, preserving meaning and names before showing **Your words**.
 - Combines the personal note with the fixed Shodh email template.
-- Creates a Gmail **draft** (never auto-sends).
+- Creates a Gmail **draft** (never auto-sends). Contact email is optional; leave it blank to add the recipient directly in Gmail.
 - Updates the Google Sheet tracker automatically.
 - Installs to a phone home screen as a PWA.
 
@@ -160,4 +160,4 @@ Run `npm test` to check local API routing, private-file isolation, request valid
 
 ## Recording troubleshooting
 
-After recording, use the audio player to check what the microphone captured. An empty transcription shows a clear no-speech message instead of silently leaving an empty note. You can retry transcription without re-recording, or upload an audio file. Browser recording errors and timeouts release the controls so you can try again. Transcription logs include byte counts and status only, never the audio or transcript text.
+After recording, use the audio player to check what the microphone captured. An empty transcription shows a clear no-speech message instead of silently leaving an empty note. You can retry transcription without re-recording, record again, or type your note. Browser recording errors and timeouts release the controls so you can try again. Transcription logs include byte counts and status only, never the audio or transcript text.

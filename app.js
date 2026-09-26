@@ -43,7 +43,7 @@ function setStep(step) {
 function setBusy(busy) {
   state.busy = busy;
   document.querySelectorAll('.queue-contact').forEach(button => { button.disabled = busy || button.dataset.completed === 'true'; });
-  ['skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn', 'audioUpload'].forEach(id => { $(id).disabled = busy; });
+  ['skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn'].forEach(id => { $(id).disabled = busy; });
   $('transcript').readOnly = busy;
   $('draftBtn').disabled = busy || !currentContact() || completed(currentContact()) || !$('transcript').value.trim();
   $('micBtn').disabled = busy && !state.recording;
@@ -108,7 +108,7 @@ function renderContact() {
   resetComposer();
   $('avatar').textContent = initials(c.name); $('contactName').textContent = c.name || 'Unnamed contact'; $('contactCompany').textContent = c.company || '—';
   $('introReason').textContent = c.introReason || 'A thoughtful introduction'; $('arunContext').textContent = c.context || 'Add a personal note about why you’d like to connect.';
-  $('contactStatus').textContent = 'Needs your note'; $('emailTo').textContent = c.email || 'No email added';
+  $('contactStatus').textContent = 'Needs your note'; $('emailTo').textContent = c.email || 'Add recipient in Gmail';
   $('contactPosition').textContent = `${state.contacts.indexOf(c) + 1} / ${state.contacts.length}`;
   const saved = state.notes.get(c.rowNumber) || { transcript: c.cleanedNote || c.arunNote || '' };
   $('transcript').value = saved.transcript;
@@ -230,7 +230,7 @@ async function startRecording() {
     show($('transcriptSection'), true);
     recordingStatus('Recording… tap the microphone again when you’re finished.');
     startLevelMeter(stream);
-  } catch (e) { state.stream?.getTracks().forEach(t => t.stop()); state.recording = false; setBusy(false); recordingStatus(`Microphone could not start: ${e.message}. Allow microphone access, or type or upload your note.`, true); show($('transcriptSection'), true); $('transcript').focus(); }
+  } catch (e) { state.stream?.getTracks().forEach(t => t.stop()); state.recording = false; setBusy(false); recordingStatus(`Microphone could not start: ${e.message}. Allow microphone access, or type your note.`, true); show($('transcriptSection'), true); $('transcript').focus(); }
 }
 
 function recordingStatus(message, error = false) {
@@ -286,7 +286,7 @@ function releaseRecording() {
   show($('timer'), false);
 }
 async function transcribeRecording(blob, filename) {
-  if (!blob?.size) throw new Error('No audio was captured. Check microphone access or upload an audio file.');
+  if (!blob?.size) throw new Error('No audio was captured. Check microphone access and record again.');
   // Keep the encoded JSON below the hosted function's request limit.
   if (blob.size > 3_000_000) throw new Error('This recording is too large. Use a shorter recording (up to 90 seconds).');
   recordingStatus('Preparing your English transcript… your words will appear below.');
@@ -310,7 +310,7 @@ async function stopRecording() {
   try {
     const blob = await finishRecording(state.recorder, state.chunks);
     state.stream?.getTracks().forEach(track => track.stop());
-    if (!blob.size) throw new Error('No audio was captured. Check microphone access, or upload an audio file.');
+    if (!blob.size) throw new Error('No audio was captured. Check microphone access and record again.');
     const filename = blob.type.includes('mp4') ? 'intro.mp4' : 'intro.webm';
     showRecordingPreview(blob, filename);
     await transcribeRecording(blob, filename);
@@ -324,14 +324,6 @@ async function retryRecording() {
   catch (error) { recordingStatus(error.message, true); }
   finally { setBusy(false); }
 }
-async function uploadRecording(event) {
-  const file = event.target.files?.[0]; if (!file || state.busy) return;
-  show($('transcriptSection'), true);
-  showRecordingPreview(file, file.name); setBusy(true);
-  try { await transcribeRecording(file, file.name); }
-  catch (error) { recordingStatus(error.message, true); }
-  finally { setBusy(false); event.target.value = ''; scrollToElement($('transcriptSection')); }
-}
 
 function localPreview(contact, cleanedNote) {
   const subject = state.settings.email_subject.replaceAll('{{FirstName}}', firstName(contact.name)).replaceAll('{{Name}}', contact.name || '').replaceAll('{{Company}}', contact.company || '');
@@ -342,7 +334,6 @@ async function createDraft() {
   const c = currentContact(); if (!c || state.busy || completed(c)) return;
   const reviewedNote = $('transcript').value.trim();
   if (!reviewedNote) { banner('Record or type your note first.', 'error'); $('transcript').focus(); return; }
-  if (state.mode === 'google' && !c.email) return banner('This contact needs an email address in your tracker before a draft can be created.', 'error');
   banner(''); setBusy(true); $('draftBtn').textContent = 'Creating draft…';
   try {
     let preview = localPreview(c, reviewedNote), draftWarning = '';
@@ -425,7 +416,6 @@ $('micBtn').addEventListener('click', startRecording);
 $('typeNoteBtn').addEventListener('click', () => { setStep(1); show($('transcriptSection'), true); $('transcript').focus(); scrollToElement($('transcriptSection')); });
 $('redoBtn').addEventListener('click', startRecording);
 $('retryRecordingBtn').addEventListener('click', retryRecording);
-$('audioUpload').addEventListener('change', uploadRecording);
 $('transcript').addEventListener('input', () => { setStep(1); saveComposer(); setBusy(state.busy); });
 $('draftBtn').addEventListener('click', createDraft);
 $('skipBtn').addEventListener('click', skipCurrent);

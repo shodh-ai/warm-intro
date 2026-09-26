@@ -150,3 +150,17 @@ test('rejects CC header injection before creating any draft', async () => {
   assert.equal(res.statusCode, 400);
   assert.equal(gmailCalls(calls).length, 0);
 });
+
+
+test('a blank contact email creates a recipient-free Gmail draft and updates the tracker', async () => {
+  const calls = googleMock({ recipient: '   ' });
+  const res = response();
+  await handler(request(), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.draftCreated, true);
+  const raw = Buffer.from(JSON.parse(gmailCalls(calls)[0].body).message.raw, 'base64url').toString('utf8');
+  assert.doesNotMatch(raw, /^To:/m);
+  assert.ok(raw.includes(approvedNote));
+  assert.equal(JSON.parse(sheetWrites(calls)[0].body).values[0][7], 'Draft Ready');
+  assert.ok(!calls.some(call => call.url.includes('/send')));
+});

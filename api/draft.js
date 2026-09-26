@@ -25,8 +25,8 @@ export default async function handler(req, res) {
     const [contacts, settings] = await Promise.all([getContacts(accessToken, session.sheetId), getSettings(accessToken, session.sheetId)]);
     const current = contacts.find(c => c.rowNumber === rowNumber);
     if (!current) return res.status(404).json({ error: 'Contact not found' });
-    const recipient = current.email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) || recipient.includes('replace-with-your-email')) return res.status(400).json({ error: 'Add a valid recipient email in the tracker before creating a Gmail draft.' });
+    const recipient = String(current.email || '').trim();
+    if (recipient && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) || recipient.includes('replace-with-your-email'))) return res.status(400).json({ error: 'Correct the recipient email in the tracker, or leave it blank to add it in Gmail.' });
 
     const cc = String(settings.cc_email || '').trim();
     if (cc && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(cc)) return res.status(400).json({ error: 'Add one valid CC email in the tracker Settings, or leave it blank.' });
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const subject = subjectFor(settings.email_subject, current);
     const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `More about Shodh — from Arastu:\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
     const raw = [
-      `To: ${recipient}`,
+      ...(recipient ? [`To: ${recipient}`] : []),
       ...(cc ? [`Cc: ${cc}`] : []),
       `Subject: ${encodeHeader(subject)}`,
       'MIME-Version: 1.0',
