@@ -34,8 +34,11 @@ export default async function handler(req, res) {
     if (cc && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(cc)) return res.status(400).json({ error: 'Add one valid CC email in the tracker Settings, or leave it blank.' });
     const deck = String(settings.deck_url || '').trim();
     if (deck && !/^https:\/\/[^\s]+$/i.test(deck)) return res.status(400).json({ error: 'Use an HTTPS deck link in the tracker Settings, or leave it blank.' });
-    const subject = subjectFor(settings.email_subject, current);
-    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `${settings.founder_heading || (companyDefaults(company, session) ? `More about ${company.name}:` : 'More about Shodh — from Arastu:')}\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
+    const baseSubject = subjectFor(settings.email_subject, current);
+    const subject = settings.founder_note && !/^fwd?:/i.test(baseSubject) ? `Fwd: ${baseSubject}` : baseSubject;
+    const forwardedFrom = settings.forwarded_from || (companyDefaults(company, session) ? '' : 'Arastu Sharma <arastu@shodh.ai>');
+    const forwardedHeader = ['---------- Forwarded message ---------', forwardedFrom ? `From: ${forwardedFrom}` : '', settings.forwarded_to ? `To: ${settings.forwarded_to}` : ''].filter(Boolean).join('\n');
+    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `${forwardedHeader}\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
     const raw = [
       ...(recipient ? [`To: ${recipient}`] : []),
       ...(cc ? [`Cc: ${cc}`] : []),

@@ -379,7 +379,7 @@ async function retryRecording() {
 
 function localPreview(contact, cleanedNote) {
   const subject = state.settings.email_subject.replaceAll('{{FirstName}}', firstName(contact.name)).replaceAll('{{Name}}', contact.name || '').replaceAll('{{Company}}', contact.company || '');
-  const body = [`Hi ${firstName(contact.name)},`, cleanedNote, state.settings.fixed_template, state.settings.signature, state.settings.founder_note ? `More about Shodh — from Arastu:\n\n${state.settings.founder_note}` : '', state.settings.deck_url ? `Company deck: ${state.settings.deck_url}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
+  const body = [`Hi ${firstName(contact.name)},`, cleanedNote, state.settings.fixed_template, state.settings.signature, state.settings.founder_note ? `---------- Forwarded message ---------\n\n${state.settings.founder_note}` : '', state.settings.deck_url ? `Company deck: ${state.settings.deck_url}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
   return { subject, body };
 }
 async function createDraft() {

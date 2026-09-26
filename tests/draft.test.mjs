@@ -139,7 +139,10 @@ test('appends Arastu company note below Arun signature and includes configured C
   await handler(request(), res);
   assert.equal(res.statusCode, 200);
   assert.ok(res.body.body.indexOf(approvedNote) < res.body.body.indexOf(fixedTemplate));
-  assert.ok(res.body.body.indexOf('Arun Seth') < res.body.body.indexOf('More about Shodh — from Arastu:'));
+  assert.ok(res.body.body.indexOf('Arun Seth') < res.body.body.indexOf('---------- Forwarded message ---------'));
+  assert.match(res.body.body, /From: Arastu Sharma <arastu@shodh.ai>/);
+  assert.match(res.body.subject, /^Fwd: /);
+  assert.doesNotMatch(res.body.body, /More about Shodh/);
   assert.ok(res.body.body.endsWith('Company deck: https://example.com/deck'));
   const raw = Buffer.from(JSON.parse(gmailCalls(calls)[0].body).message.raw, 'base64url').toString('utf8');
   assert.match(raw, /\r\nCc: founder@example.com\r\n/);

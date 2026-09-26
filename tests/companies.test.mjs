@@ -42,7 +42,7 @@ test('draft uses selected company wording and updates only its tracker',async()=
   const calls=setup({settings:[['fixed_template','Exact other company wording'],['founder_note','Exact founder words']]}),response=res();
   await draft(req({companyId:'other',rowNumber:2,cleanedNote:'Exact personal words'}),response);
   assert.equal(response.statusCode,200);assert.match(response.body.body,/Exact other company wording/);
-  assert.match(response.body.body,/More about Other Company:/);assert.doesNotMatch(response.body.body,/Shodh|Arastu/);
+  assert.match(response.body.body,/Forwarded message/);assert.doesNotMatch(response.body.body,/Shodh|Arastu/);
   assert.ok(calls.some(c=>c.method==='PUT' && c.url.includes('/other/')));
   assert.ok(!calls.some(c=>c.url.includes('/home/values/Contacts')));
 });

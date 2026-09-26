@@ -41,7 +41,7 @@ export async function resolveCompany(accessToken, session, requestedId) {
 export function companyDefaults(company, session) {
   return company.id === registrySheetId(session) ? undefined : {
     email_subject: `Introduction to ${company.name} — {{FirstName}}`,
-    fixed_template: '', founder_note: '', founder_heading: `More about ${company.name}:`,
+    fixed_template: '', founder_note: '', forwarded_from: '', forwarded_to: '',
     signature: 'Cheers Arun', cc_email: '', deck_url: '', followup_days: '5'
   };
 }
