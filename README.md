@@ -91,7 +91,7 @@ Google bundles draft management and sending into `gmail.compose`; the app only c
 
 ### 4. Open the app
 
-- Open the app; no access code is required.
+- Enter the configured app password, then connect Google.
 - Settings → **Connect Google**.
 - Sign in with Arun's Google account.
 - The configured tracker loads automatically. Create a tracker only if none is configured.
@@ -137,7 +137,7 @@ Supported subject variables:
 - The OpenAI API key and Google client secret never go to the browser.
 - Google refresh credentials are encrypted into an HttpOnly cookie using `APP_SECRET` rather than stored in frontend JavaScript.
 - Set `ALLOWED_GOOGLE_EMAIL` for a single-advisor production deployment.
-- The deployment opens without an access code. Google sign-in is required to read the tracker and create Gmail drafts.
+- Set `APP_ACCESS_CODE` privately for the deployment. Google sign-in is also required to read the tracker and create Gmail drafts.
 - The app creates drafts only; Arun remains the person who sends the email.
 
 ## Demo mode
