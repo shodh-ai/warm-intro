@@ -26,7 +26,9 @@ export default async function handler(req, res) {
     const allowed = process.env.ALLOWED_GOOGLE_EMAIL?.trim().toLowerCase();
     if (allowed && String(user.email || '').toLowerCase() !== allowed) return res.status(403).send('This Google account is not allowed for this app.');
 
-    const session = { refresh_token: token.refresh_token, email: user.email || '', sheetId: '' };
+    const previous = decryptJson(cookies.google_session);
+    const sheetId = previous?.email === user.email ? previous.sheetId : '';
+    const session = { refresh_token: token.refresh_token, email: user.email || '', sheetId: sheetId || process.env.GOOGLE_SHEET_ID || '' };
     const set = [
       cookie('google_session', encryptJson(session), { maxAge: 60 * 60 * 24 * 180 }),
       cookie('google_oauth_state', '', { maxAge: 1 })
