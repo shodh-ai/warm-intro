@@ -1,0 +1,6 @@
+.env*
+tests/
+dev-server.mjs
+README.md
+*.log
+.DS_Store
