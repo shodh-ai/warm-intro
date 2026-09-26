@@ -44,9 +44,9 @@ function setStep(step) {
 function setBusy(busy) {
   state.busy = busy;
   document.querySelectorAll('.queue-contact').forEach(button => { button.disabled = busy || button.dataset.completed === 'true'; });
-  ['skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'cleanBtn', 'useNoteBtn', 'editNoteBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn', 'audioUpload'].forEach(id => { $(id).disabled = busy; });
+  ['skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn', 'audioUpload'].forEach(id => { $(id).disabled = busy; });
   $('transcript').readOnly = busy;
-  $('cleanedNote').readOnly = busy;
+  $('draftBtn').disabled = busy || !currentContact() || completed(currentContact()) || !$('transcript').value.trim();
   $('micBtn').disabled = busy && !state.recording;
   if (completed(currentContact() || {})) {
     ['skipBtn', 'micBtn', 'typeNoteBtn', 'draftBtn'].forEach(id => { $(id).disabled = true; });
@@ -86,19 +86,20 @@ function renderQueue() {
 }
 function saveComposer() {
   const c = currentContact();
-  if (c && !completed(c)) state.notes.set(c.rowNumber, { transcript: $('transcript').value, cleanedNote: $('cleanedNote').value, badge: $('cleanBadge').textContent });
+  if (c && !completed(c)) state.notes.set(c.rowNumber, { transcript: $('transcript').value });
 }
 function resetComposer() {
   clearRecordingPreview();
   recordingStatus(''); show($('recordingMeter'), false);
-  $('transcript').value = ''; $('cleanedNote').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = '';
-  ['transcriptSection','cleanedSection','emailSection','draftSuccess'].forEach(id => show($(id), false));
-  show($('voiceZone'), true); show($('emailPreview'), true); show($('openGmailBtn'), state.mode === 'google');
+  $('transcript').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = '';
+  ['transcriptSection','emailSection','draftSuccess'].forEach(id => show($(id), false));
+  $('emailSection').open = false;
+  show($('voiceZone'), true); show($('openGmailBtn'), state.mode === 'google');
   $('micBtn').classList.remove('recording'); $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Tap to speak'; show($('timer'), false);
   $('liveHint').classList.remove('live-transcript'); $('liveHint').textContent = NOTE_HINT;
-  $('draftBtn').textContent = state.mode === 'demo' ? 'Save demo draft ↗' : 'Create Gmail draft ↗';
-  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Saved as a draft. You decide when to send.';
+  $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗';
+  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Read or edit your words, then create a draft with your email template. Nothing is sent.';
   setStep(0); setBusy(false);
 }
 function renderContact() {
@@ -111,11 +112,11 @@ function renderContact() {
   $('introReason').textContent = c.introReason || 'A thoughtful introduction'; $('arunContext').textContent = c.context || 'Add a personal note about why you’d like to connect.';
   $('contactStatus').textContent = 'Needs your note'; $('emailTo').textContent = c.email || 'No email added';
   $('contactPosition').textContent = `${state.contacts.indexOf(c) + 1} / ${state.contacts.length}`;
-  const saved = state.notes.get(c.rowNumber) || { transcript: c.arunNote || '', cleanedNote: c.cleanedNote || '' };
-  $('transcript').value = saved.transcript; $('cleanedNote').value = saved.cleanedNote;
-  $('cleanBadge').textContent = saved.badge || 'Saved note';
-  show($('transcriptSection'), Boolean(saved.transcript)); show($('cleanedSection'), Boolean(saved.cleanedNote));
-  if (saved.cleanedNote) setStep(1);
+  const saved = state.notes.get(c.rowNumber) || { transcript: c.cleanedNote || c.arunNote || '' };
+  $('transcript').value = saved.transcript;
+  show($('transcriptSection'), Boolean(saved.transcript));
+  if (saved.transcript) setStep(1);
+  setBusy(false);
 }
 function selectContact(id) {
   if (state.busy || state.recording) return;
@@ -138,7 +139,7 @@ async function api(path, options = {}) {
   if (opts.body && typeof opts.body !== 'string') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.body); }
   const r = await fetch(path, opts);
   const data = (r.headers.get('content-type') || '').includes('application/json') ? await r.json() : await r.text();
-  if (!r.ok) { const err = new Error(typeof data === 'string' ? data : data.error || `Request failed (${r.status})`); err.status = r.status; throw err; }
+  if (!r.ok) { const err = new Error(typeof data === 'string' ? data : data.error || `Request failed (${r.status})`); err.status = r.status; err.data = data; throw err; }
   return data;
 }
 async function checkAuth() {
@@ -161,9 +162,6 @@ async function loadData() {
     if (state.mode === 'demo') state.contacts = readDemo() || state.contacts;
     state.selectedId = pendingContacts()[0]?.rowNumber ?? null;
     show($('workspace'), true); renderContact();
-    if (state.mode === 'google' && !state.synced) {
-      state.synced = true; api('/api/sync-status', { method: 'POST', body: {} }).catch(() => {});
-    }
   } catch (e) {
     show($('workspace'), false);
     if (e.status === 401) { state.authenticated = false; show($('unlockCard'), true); }
@@ -213,7 +211,7 @@ async function startRecording() {
     recorder.addEventListener('error', () => { if (state.recording) stopRecording(); });
     recorder.ondataavailable = e => { if (e.data?.size) state.chunks.push(e.data); };
     recorder.start(500);
-    state.recording = true; state.startedAt = Date.now(); setBusy(true);
+    state.recording = true; state.startedAt = Date.now(); setStep(0); setBusy(true);
     $('micBtn').setAttribute('aria-label', 'Stop recording'); $('micBtn').setAttribute('aria-pressed', 'true');
     $('micBtn').classList.add('recording'); $('micIcon').textContent = '■'; $('micLabel').textContent = 'Tap to stop'; show($('timer'), true);
     $('liveHint').textContent = 'Listening… your English transcript will appear when you stop.';
@@ -287,9 +285,9 @@ async function transcribeRecording(blob, filename) {
   const result = await api('/api/transcribe', { method: 'POST', body: { audioBase64: btoa(binary), mimeType: blob.type || 'audio/webm', fileName: filename, contact: currentContact() } });
   const text = result.text?.trim() || '';
   if (!text) throw new Error('No speech was detected. Play the recording below to check the audio, then try again.');
-  $('transcript').value = text; $('cleanedNote').value = '';
-  show($('cleanedSection'), false); show($('emailSection'), false); setStep(0); saveComposer();
-  recordingStatus('Your English transcript is ready. Review your words, then polish the note.');
+  $('transcript').value = text;
+  show($('emailSection'), false); setStep(1); saveComposer();
+  recordingStatus('Your English text is ready. Read or edit it, then tap OK, create draft.');
 }
 async function stopRecording() {
   if (!state.recording) return;
@@ -324,56 +322,42 @@ async function uploadRecording(event) {
   finally { setBusy(false); event.target.value = ''; scrollToElement($('transcriptSection')); }
 }
 
-async function cleanNote() {
-  if (state.busy) return;
-  const transcript = $('transcript').value.trim();
-  if (!transcript) { banner('Type or record a note first.', 'error'); $('transcript').focus(); return; }
-  banner(''); setBusy(true); $('cleanBtn').textContent = 'Polishing…';
-  try {
-    let text = transcript, polished = false;
-    if (!state.localPreview) {
-      try { const result = await api('/api/clean', { method: 'POST', body: { transcript, contact: currentContact() } }); if (result.text?.trim()) { text = result.text.trim(); polished = !result.fallback; } }
-      catch (error) {
-        const noCredits = /no credits|insufficient.quota|exceeded.*quota/i.test(error.message);
-        banner(noCredits ? 'OpenAI API credits are exhausted. Add credits to enable note cleanup. Your original words are ready to review.' : 'Note cleanup is unavailable. Your original words are ready to review.');
-      }
-    }
-    $('cleanedNote').value = text;
-    $('cleanBadge').textContent = polished ? 'Lightly polished' : 'Your original words';
-    show($('cleanedSection'), true); show($('emailSection'), false); setStep(1); saveComposer(); scrollToElement($('cleanedSection'));
-  } finally { setBusy(false); $('cleanBtn').textContent = 'Polish my note ↗'; }
-}
 function localPreview(contact, cleanedNote) {
   const subject = state.settings.email_subject.replaceAll('{{FirstName}}', firstName(contact.name)).replaceAll('{{Name}}', contact.name || '').replaceAll('{{Company}}', contact.company || '');
   const body = `Hi ${firstName(contact.name)},\n\n${cleanedNote}\n\n${state.settings.fixed_template}\n\n${state.settings.signature}`.trim();
   return { subject, body };
 }
-function useNote() {
-  const c = currentContact(); if (!c || state.busy || completed(c)) return;
-  const note = $('cleanedNote').value.trim(); if (!note) return banner('Add a note before continuing.', 'error');
-  const preview = localPreview(c, note); $('emailSubject').textContent = preview.subject; $('emailBody').textContent = preview.body;
-  show($('emailSection'), true); show($('emailPreview'), true); $('previewToggle').textContent = 'Hide preview'; $('previewToggle').setAttribute('aria-expanded', 'true');
-  setStep(2); saveComposer(); scrollToElement($('emailSection'));
-}
 async function createDraft() {
   const c = currentContact(); if (!c || state.busy || completed(c)) return;
-  const cleanedNote = $('cleanedNote').value.trim(), transcript = $('transcript').value.trim();
-  if (!cleanedNote) return banner('Add and review your note first.', 'error');
+  const reviewedNote = $('transcript').value.trim();
+  if (!reviewedNote) { banner('Record or type your note first.', 'error'); $('transcript').focus(); return; }
   if (state.mode === 'google' && !c.email) return banner('This contact needs an email address in your tracker before a draft can be created.', 'error');
-  setBusy(true); $('draftBtn').textContent = 'Creating draft…';
+  banner(''); setBusy(true); $('draftBtn').textContent = 'Creating draft…';
   try {
+    let preview = localPreview(c, reviewedNote), draftWarning = '';
     if (state.mode === 'google') {
-      const result = await api('/api/draft', { method: 'POST', body: { rowNumber: c.rowNumber, cleanedNote, transcript } });
-      Object.assign(c, result.contact || {}, { status: 'Draft Ready' });
+      let result;
+      try {
+        result = await api('/api/draft', { method: 'POST', body: { rowNumber: c.rowNumber, cleanedNote: reviewedNote, transcript: reviewedNote } });
+      } catch (error) {
+        if (!error.data?.draftCreated || !error.data?.draftId) throw error;
+        result = error.data;
+        draftWarning = 'Saved in Gmail, but the tracker could not update. Open Gmail to review your draft.';
+      }
+      Object.assign(c, result.contact || {}, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' });
+      preview = { subject: result.subject ?? preview.subject, body: result.body ?? preview.body };
+      if (result.warning) banner(result.warning);
       $('openGmailBtn').href = result.gmailUrl || 'https://mail.google.com/mail/u/0/#drafts'; show($('openGmailBtn'), true);
-    } else { Object.assign(c, { cleanedNote, arunNote: transcript, status: 'Draft Ready' }); persistDemo(); show($('openGmailBtn'), false); }
+    } else { Object.assign(c, { cleanedNote: reviewedNote, arunNote: reviewedNote, status: 'Draft Ready' }); persistDemo(); show($('openGmailBtn'), false); }
     $('contactStatus').textContent = state.mode === 'demo' ? 'Demo draft saved' : 'Draft ready';
     $('successTitle').textContent = state.mode === 'demo' ? 'Demo draft saved' : 'Your introduction is ready';
-    $('successMessage').textContent = state.mode === 'demo' ? 'Saved in this browser. Nothing was created in Gmail.' : 'Waiting in Gmail for your final review and Send.';
-    ['voiceZone','transcriptSection','cleanedSection','emailSection'].forEach(id => show($(id), false));
+    $('successMessage').textContent = state.mode === 'demo' ? 'Saved in this browser. Nothing was created in Gmail.' : draftWarning || 'Waiting in Gmail for your final review and Send.';
+    $('emailSubject').textContent = preview.subject; $('emailBody').textContent = preview.body;
+    ['voiceZone','transcriptSection'].forEach(id => show($(id), false));
+    show($('emailSection'), true); setStep(2);
     show($('draftSuccess'), true); renderProgress(); renderQueue(); scrollToElement($('draftSuccess'));
   } catch (e) { banner(e.message, 'error'); }
-  finally { setBusy(false); $('draftBtn').textContent = state.mode === 'demo' ? 'Save demo draft ↗' : 'Create Gmail draft ↗'; }
+  finally { setBusy(false); $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗'; }
 }
 async function skipCurrent() {
   const c = currentContact(); if (!c || state.busy || completed(c)) return;
@@ -426,16 +410,11 @@ document.addEventListener('keydown', e => {
 });
 $('googleConnectBtn').addEventListener('click', e => { if (state.localPreview || !state.authenticated) e.preventDefault(); });
 $('micBtn').addEventListener('click', startRecording);
-$('typeNoteBtn').addEventListener('click', () => { show($('transcriptSection'), true); $('transcript').focus(); scrollToElement($('transcriptSection')); });
+$('typeNoteBtn').addEventListener('click', () => { setStep(1); show($('transcriptSection'), true); $('transcript').focus(); scrollToElement($('transcriptSection')); });
 $('redoBtn').addEventListener('click', startRecording);
 $('retryRecordingBtn').addEventListener('click', retryRecording);
 $('audioUpload').addEventListener('change', uploadRecording);
-$('transcript').addEventListener('input', () => { $('cleanedNote').value = ''; show($('cleanedSection'), false); show($('emailSection'), false); setStep(0); saveComposer(); });
-$('cleanedNote').addEventListener('input', () => { show($('emailSection'), false); setStep(1); saveComposer(); });
-$('cleanBtn').addEventListener('click', cleanNote);
-$('useNoteBtn').addEventListener('click', useNote);
-$('editNoteBtn').addEventListener('click', () => { $('cleanedNote').focus(); show($('emailSection'), false); setStep(1); });
-$('previewToggle').addEventListener('click', () => { const visible = $('emailPreview').classList.contains('hidden'); show($('emailPreview'), visible); $('previewToggle').textContent = visible ? 'Hide preview' : 'Show preview'; $('previewToggle').setAttribute('aria-expanded', String(visible)); });
+$('transcript').addEventListener('input', () => { setStep(1); saveComposer(); setBusy(state.busy); });
 $('draftBtn').addEventListener('click', createDraft);
 $('skipBtn').addEventListener('click', skipCurrent);
 $('nextBtn').addEventListener('click', nextContact);

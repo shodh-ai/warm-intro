@@ -813,6 +813,26 @@ h1 em {
   margin-top:9px;
 }
 
+#emailSection > summary {
+  min-height:44px;
+  margin-bottom:0;
+  cursor:pointer;
+}
+
+#emailSection > summary::after {
+  content:'+';
+  font-size:20px;
+  color:var(--green);
+}
+
+#emailSection[open] > summary {
+  margin-bottom:10px;
+}
+
+#emailSection[open] > summary::after {
+  content:'−';
+}
+
 .nav-actions {
   display:flex;
   justify-content:space-between;

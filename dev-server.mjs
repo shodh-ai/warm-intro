@@ -17,7 +17,7 @@ const publicFiles = new Map([
 ]);
 const apiRoutes = new Set([
   'auth-status', 'auth-login', 'app-data', 'clean', 'transcribe',
-  'draft', 'update-contact', 'sync-status', 'google/start', 'google/callback', 'google/setup-sheet'
+  'draft', 'update-contact', 'google/start', 'google/callback', 'google/setup-sheet'
 ]);
 
 // Expose the same response helpers used by the Vercel handlers.

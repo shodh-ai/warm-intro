@@ -7,11 +7,9 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 - Shows one contact card at a time, with progress and context.
 - Records Arun's voice from the phone microphone.
 - Converts English, Hindi and Hinglish audio directly to English in one request using the OpenAI audio translations endpoint, preserving meaning and names before showing **Your words**.
-- Uses `gpt-5.6-luna` to lightly clean the 2–3 line note without inventing facts or changing his voice.
 - Combines the personal note with the fixed Shodh email template.
 - Creates a Gmail **draft** (never auto-sends).
 - Updates the Google Sheet tracker automatically.
-- On later app opens, checks Gmail Sent for matching drafts and moves `Draft Ready` → `Sent` automatically.
 - Installs to a phone home screen as a PWA.
 
 ## Phone flow
@@ -20,17 +18,17 @@ A private mobile app for Arun Seth to process warm introductions one person at a
 2. One contact is shown.
 3. Tap **Tap to speak** and dictate 2–3 lines.
 4. Watch the microphone-level indicator while speaking. Tap again to stop (or it stops at 90 seconds).
-5. Review the transcript in **Your words**, then tap **Polish my note**.
-6. Tap **Use this**.
-7. Review the final email.
-8. Tap **Create Gmail Draft**.
-9. Open Gmail, send, then return and move to the next contact.
+5. Review or edit the English transcript in **Your words**.
+6. Tap **OK, create draft**. The exact approved text is combined with the Sheet’s email template and saved in Gmail.
+7. Open Gmail to review the draft, or move to the next person.
 
-The app intentionally does **not** make swipe-right send an email. High-value introductions require a deliberate Create Draft action.
+The app intentionally does **not** make swipe-right send an email. Draft creation requires approving the displayed text.
 
-## Google Sheet created by the app
+## One Google Sheet for the app
 
-When you connect Google and tap **Create intro tracker sheet**, the app creates:
+Set `GOOGLE_SHEET_ID` to the shared tracker spreadsheet. The app reuses that one file; edit its Contacts tab to update the list shown when the app opens or refreshes. It also stores the template and progress in the same spreadsheet. Grant Arun access to this file.
+
+If no tracker is configured, **Create intro tracker sheet** can create one with these tabs:
 
 - `Contacts` — source-of-truth database.
 - `Arun - Action Needed` — automatically filtered list of contacts that still need Arun's note.
@@ -43,7 +41,7 @@ When you connect Google and tap **Create intro tracker sheet**, the app creates:
 
 ## Deploy to Vercel
 
-This project deliberately has no npm dependencies. It is a static mobile UI plus **11 Vercel `/api` serverless functions**, keeping it within the Hobby-plan function-count limit.
+This project deliberately has no npm dependencies. It is a static mobile UI plus **10 Vercel `/api` serverless functions**, keeping it within the Hobby-plan function-count limit.
 
 ### 1. Create a Vercel project
 
@@ -63,6 +61,7 @@ Required:
 
 Recommended:
 
+- `GOOGLE_SHEET_ID` — the existing tracker spreadsheet ID.
 - `ALLOWED_GOOGLE_EMAIL` — set this to Arun's exact Gmail/Google Workspace email so nobody else can connect a Google account.
 - `APP_BASE_URL` — your final URL, for example `https://intro.shodh.ai`.
 
@@ -87,18 +86,17 @@ Scopes requested by the app:
 - `openid`
 - `email`
 - `https://www.googleapis.com/auth/gmail.compose`
-- `https://www.googleapis.com/auth/gmail.readonly`
 - `https://www.googleapis.com/auth/spreadsheets`
 
-`gmail.readonly` is only used to detect whether a created draft was later sent, so the tracker can move to `Sent` automatically.
+Google bundles draft management and sending into `gmail.compose`; the app only calls Gmail’s draft-creation API. It does not read the inbox or send emails.
 
 ### 4. Open the app
 
 - Enter the private app access code.
 - Settings → **Connect Google**.
 - Sign in with Arun's Google account.
-- Settings → **Create intro tracker sheet**.
-- Open the Sheet once and replace the seeded test email with your own email.
+- The configured tracker loads automatically. Create a tracker only if none is configured.
+- Add contacts and your email template to that Sheet.
 - Test one complete draft before loading real contacts.
 
 ### 5. Put it on Arun's phone
@@ -142,7 +140,7 @@ Supported subject variables:
 
 ## Demo mode
 
-With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real note cleanup and transcription. Without Google credentials, contacts and drafts remain demo-only. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
+With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real transcription. Without Google credentials, contacts and drafts remain demo-only. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
 
 On the hosted app, the backend selects demo mode when Google or a tracker is not connected. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
 
@@ -151,9 +149,8 @@ Notes are retained while switching contacts during the current page session. Set
 ## Current model defaults
 
 - audio-to-English translation: `whisper-1` (the audio translations endpoint)
-- light note cleanup: `gpt-5.6-luna`
 
-The cleanup model can be overridden with `CLEANUP_MODEL`. Audio translation uses the model supported by the translations endpoint.
+Audio translation uses the model supported by the translations endpoint. The optional cleanup API remains available, but the phone flow saves the exact approved transcript without an additional model call.
 
 ## Local checks
 

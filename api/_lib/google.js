@@ -4,7 +4,6 @@ export const GOOGLE_SCOPES = [
   'openid',
   'email',
   'https://www.googleapis.com/auth/gmail.compose',
-  'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/spreadsheets'
 ].join(' ');
 
