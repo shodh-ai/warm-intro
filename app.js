@@ -1,3 +1,4 @@
+import { finishRecording, audioLevel } from './audio-recording.js';
 const $ = (id) => document.getElementById(id);
 
 const FALLBACK_SETTINGS = {
@@ -16,7 +17,7 @@ const state = {
   mode: 'demo', contacts: [], settings: FALLBACK_SETTINGS, selectedId: null,
   recording: false, busy: false, stream: null, recorder: null, chunks: [], timerId: null, startedAt: 0,
   pc: null, dc: null, liveText: '', lastBlob: null, authenticated: false, google: null,
-  localPreview: false, notes: new Map()
+  localPreview: false, notes: new Map(), audioContext: null, levelTimer: null, recordingUrl: null, recordingFileName: 'intro.webm', heardAudio: false
 };
 const MIC_ICON = $('micIcon').innerHTML;
 const NOTE_HINT = 'Share why you’d like to connect them. Two or three natural lines are perfect.';
@@ -43,7 +44,7 @@ function setStep(step) {
 function setBusy(busy) {
   state.busy = busy;
   document.querySelectorAll('.queue-contact').forEach(button => { button.disabled = busy || button.dataset.completed === 'true'; });
-  ['skipBtn', 'nextBtn', 'resetDemoBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'cleanBtn', 'useNoteBtn', 'editNoteBtn', 'createSheetBtn', 'draftBtn'].forEach(id => { $(id).disabled = busy; });
+  ['skipBtn', 'nextBtn', 'resetDemoBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'cleanBtn', 'useNoteBtn', 'editNoteBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn', 'audioUpload'].forEach(id => { $(id).disabled = busy; });
   $('transcript').readOnly = busy;
   $('cleanedNote').readOnly = busy;
   $('micBtn').disabled = busy && !state.recording;
@@ -88,6 +89,8 @@ function saveComposer() {
   if (c && !completed(c)) state.notes.set(c.rowNumber, { transcript: $('transcript').value, cleanedNote: $('cleanedNote').value, badge: $('cleanBadge').textContent });
 }
 function resetComposer() {
+  clearRecordingPreview();
+  recordingStatus(''); show($('recordingMeter'), false);
   $('transcript').value = ''; $('cleanedNote').value = ''; $('emailSubject').textContent = '—'; $('emailBody').textContent = '';
   ['transcriptSection','cleanedSection','emailSection','draftSuccess'].forEach(id => show($(id), false));
   show($('voiceZone'), true); show($('emailPreview'), true); show($('openGmailBtn'), state.mode === 'google');
@@ -205,7 +208,7 @@ async function startLiveTranscription(stream) {
     state.dc = dc;
     dc.addEventListener('message', (evt) => {
       try {
-        if (!state.recording) return;
+        if (!state.recording && !state.busy) return;
         const event = JSON.parse(evt.data);
         if (event.type === 'conversation.item.input_audio_transcription.delta') {
           state.liveText += event.delta || '';
@@ -255,8 +258,9 @@ async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     state.stream = stream; state.chunks = []; state.liveText = '';
     const mimeType = chooseMime();
-    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    const recorder = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: 64000 });
     state.recorder = recorder;
+    recorder.addEventListener('error', () => { if (state.recording) stopRecording(); });
     recorder.ondataavailable = e => { if (e.data?.size) state.chunks.push(e.data); };
     recorder.start(500);
     state.recording = true; state.startedAt = Date.now(); setBusy(true);
@@ -264,50 +268,121 @@ async function startRecording() {
     $('micBtn').classList.add('recording'); $('micIcon').textContent = '■'; $('micLabel').textContent = 'Tap to stop'; show($('timer'), true);
     $('liveHint').textContent = 'Listening…';
     state.timerId = setInterval(updateTimer, 250); updateTimer();
+    show($('transcriptSection'), true);
+    recordingStatus('Recording… tap the microphone again when you’re finished.');
+    startLevelMeter(stream);
     startLiveTranscription(stream);
-  } catch (e) { state.stream?.getTracks().forEach(t => t.stop()); state.recording = false; setBusy(false); banner(`Microphone could not start: ${e.message}. You can type your note instead.`, 'error'); show($('transcriptSection'), true); $('transcript').focus(); }
+  } catch (e) { state.stream?.getTracks().forEach(t => t.stop()); state.recording = false; setBusy(false); recordingStatus(`Microphone could not start: ${e.message}. Allow microphone access, or type or upload your note.`, true); show($('transcriptSection'), true); $('transcript').focus(); }
 }
 
-async function stopRecording() {
-  if (!state.recording) return;
-  state.recording = false; setBusy(true);
-  $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
-  clearInterval(state.timerId); state.timerId = null;
-  $('micBtn').classList.remove('recording'); $('micIcon').textContent = '…'; $('micLabel').textContent = 'Transcribing';
-  $('micBtn').disabled = true;
-  try { if (state.dc?.readyState === 'open') state.dc.send(JSON.stringify({ type: 'input_audio_buffer.commit' })); } catch {}
-  const blob = await new Promise(resolve => {
-    const r = state.recorder;
-    r.addEventListener('stop', () => resolve(new Blob(state.chunks, { type: r.mimeType || 'audio/webm' })), { once: true });
-    r.stop();
-  });
-  state.lastBlob = blob;
-  state.stream?.getTracks().forEach(t => t.stop());
-  try { state.pc?.close(); } catch {} state.pc = null; state.dc = null;
-
-  let text = state.liveText.trim();
+function recordingStatus(message, error = false) {
+  $('recordingStatus').textContent = message;
+  $('recordingStatus').classList.toggle('recording-error', error);
+  show($('recordingStatus'), Boolean(message));
+}
+function clearRecordingPreview() {
+  if (state.recordingUrl) URL.revokeObjectURL(state.recordingUrl);
+  state.recordingUrl = null; state.lastBlob = null;
+  $('recordingPlayback').removeAttribute('src');
+  show($('recordingPreview'), false);
+}
+function showRecordingPreview(blob, filename) {
+  clearRecordingPreview();
+  state.lastBlob = blob; state.recordingFileName = filename;
+  state.recordingUrl = URL.createObjectURL(blob);
+  $('recordingPlayback').src = state.recordingUrl;
+  show($('recordingPreview'), true);
+}
+function stopLevelMeter() {
+  clearInterval(state.levelTimer); state.levelTimer = null;
+  state.audioContext?.close().catch(() => {}); state.audioContext = null;
+  show($('recordingMeter'), false);
+}
+async function startLevelMeter(stream) {
+  state.heardAudio = false;
   try {
-    const buf = await blob.arrayBuffer();
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const context = new AudioContext(); state.audioContext = context;
+    await context.resume();
+    if (!state.recording) { stopLevelMeter(); return; }
+    const analyser = context.createAnalyser(); analyser.fftSize = 512;
+    context.createMediaStreamSource(stream).connect(analyser);
+    const samples = new Uint8Array(analyser.fftSize);
+    show($('recordingMeter'), true);
+    state.levelTimer = setInterval(() => {
+      analyser.getByteTimeDomainData(samples);
+      const level = audioLevel(samples); $('micLevel').value = level;
+      if (level > 0.025) state.heardAudio = true;
+      $('micLevelHint').textContent = state.heardAudio ? 'Microphone is picking up sound' : Date.now() - state.startedAt > 4000 ? 'No sound detected — check your microphone' : 'Speak naturally — watch the level';
+    }, 120);
+  } catch { stopLevelMeter(); }
+}
+function releaseRecording() {
+  clearInterval(state.timerId); state.timerId = null; stopLevelMeter();
+  state.stream?.getTracks().forEach(track => track.stop()); state.stream = null;
+  try { state.pc?.close(); } catch {} state.pc = null; state.dc = null;
+  state.recording = false;
+  $('micBtn').classList.remove('recording');
+  $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
+  $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Record again';
+  show($('timer'), false); $('liveHint').textContent = NOTE_HINT;
+}
+async function transcribeRecording(blob, filename) {
+  if (!blob?.size) throw new Error('No audio was captured. Check microphone access or upload an audio file.');
+  // Keep the encoded JSON below the hosted function's request limit.
+  if (blob.size > 3_000_000) throw new Error('This recording is too large. Use a shorter recording (up to 90 seconds).');
+  recordingStatus('Transcribing your recording… your words will appear below.');
+  let text = '';
+  try {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
     let binary = '';
-    const bytes = new Uint8Array(buf);
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-    const c = currentContact();
-    const result = await api('/api/transcribe', { method: 'POST', body: { audioBase64: btoa(binary), mimeType: blob.type || 'audio/webm', fileName: blob.type.includes('mp4') ? 'intro.mp4' : 'intro.webm', contact: c } });
-    text = result.text?.trim() || text;
-  } catch (e) {
-    if (!text) {
-      banner(`Transcription failed: ${e.message}. You can type the note manually below.`, 'error');
-      text = '';
-    } else banner('Live transcript captured. The final transcription service was unavailable, so review the text before using it.');
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const result = await api('/api/transcribe', { method: 'POST', body: { audioBase64: btoa(binary), mimeType: blob.type || 'audio/webm', fileName: filename, contact: currentContact() } });
+    text = result.text?.trim() || '';
+    if (!text) throw new Error('No speech was detected. Play the recording below to check the audio, then try again.');
+  } catch (error) {
+    if (state.liveText.trim()) {
+      text = state.liveText.trim();
+      recordingStatus('Using live captions because final transcription was unavailable. Please review the words.');
+    } else throw error;
   }
   $('transcript').value = text; $('cleanedNote').value = '';
   show($('cleanedSection'), false); show($('emailSection'), false); setStep(0); saveComposer();
-  show($('transcriptSection'), true);
-  setBusy(false); $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Record again';
-  scrollToElement($('transcriptSection'));
-  show($('timer'), false); $('liveHint').textContent = NOTE_HINT;
-  if (text) await cleanNote();
+  recordingStatus('Your recording is transcribed. Review your words, then polish the note.');
+}
+async function stopRecording() {
+  if (!state.recording) return;
+  state.recording = false; setBusy(true);
+  clearInterval(state.timerId); stopLevelMeter();
+  $('micBtn').classList.remove('recording'); $('micIcon').textContent = '…'; $('micLabel').textContent = 'Transcribing';
+  $('micBtn').setAttribute('aria-pressed', 'false');
+  show($('transcriptSection'), true); recordingStatus('Finishing your recording…');
+  try {
+    try { if (state.dc?.readyState === 'open') state.dc.send(JSON.stringify({ type: 'input_audio_buffer.commit' })); } catch {}
+    const blob = await finishRecording(state.recorder, state.chunks);
+    state.stream?.getTracks().forEach(track => track.stop());
+    if (!blob.size) throw new Error('No audio was captured. Check microphone access, or upload an audio file.');
+    const filename = blob.type.includes('mp4') ? 'intro.mp4' : 'intro.webm';
+    showRecordingPreview(blob, filename);
+    await transcribeRecording(blob, filename);
+  } catch (error) { recordingStatus(error.message, true); }
+  finally { releaseRecording(); setBusy(false); scrollToElement($('transcriptSection')); }
+}
+async function retryRecording() {
+  if (state.busy || !state.lastBlob) return;
+  setBusy(true);
+  try { await transcribeRecording(state.lastBlob, state.recordingFileName); }
+  catch (error) { recordingStatus(error.message, true); }
+  finally { setBusy(false); }
+}
+async function uploadRecording(event) {
+  const file = event.target.files?.[0]; if (!file || state.busy) return;
+  show($('transcriptSection'), true); state.liveText = '';
+  showRecordingPreview(file, file.name); setBusy(true);
+  try { await transcribeRecording(file, file.name); }
+  catch (error) { recordingStatus(error.message, true); }
+  finally { setBusy(false); event.target.value = ''; scrollToElement($('transcriptSection')); }
 }
 
 async function cleanNote() {
@@ -414,6 +489,8 @@ $('googleConnectBtn').addEventListener('click', e => { if (state.localPreview ||
 $('micBtn').addEventListener('click', startRecording);
 $('typeNoteBtn').addEventListener('click', () => { show($('transcriptSection'), true); $('transcript').focus(); scrollToElement($('transcriptSection')); });
 $('redoBtn').addEventListener('click', startRecording);
+$('retryRecordingBtn').addEventListener('click', retryRecording);
+$('audioUpload').addEventListener('change', uploadRecording);
 $('transcript').addEventListener('input', () => { $('cleanedNote').value = ''; show($('cleanedSection'), false); show($('emailSection'), false); setStep(0); saveComposer(); });
 $('cleanedNote').addEventListener('input', () => { show($('emailSection'), false); setStep(1); saveComposer(); });
 $('cleanBtn').addEventListener('click', cleanNote);
@@ -432,7 +509,7 @@ $('unlockForm').addEventListener('submit', async e => {
   catch (err) { banner(err.message, 'error'); }
   finally { button.disabled = false; }
 });
-window.addEventListener('pagehide', () => { state.stream?.getTracks().forEach(track => track.stop()); state.pc?.close(); clearInterval(state.timerId); });
+window.addEventListener('pagehide', () => { releaseRecording(); if (state.recordingUrl) URL.revokeObjectURL(state.recordingUrl); });
 (async function init() {
   if (await checkAuth()) { await loadData(); await loadGoogleStatus(); }
   if (new URLSearchParams(location.search).get('connected') && state.google?.connected) { banner('Google connected. Open Settings to create or open your tracker.'); history.replaceState({}, '', location.pathname); }

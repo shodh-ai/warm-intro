@@ -20,8 +20,8 @@ A responsive internal app for Arun to process warm introductions one person at a
 1. Arun opens the Warm Intro icon.
 2. One contact is shown.
 3. Tap **Tap to speak** and dictate 2–3 lines.
-4. Tap again to stop (or it stops at 90 seconds).
-5. Review the cleaned note.
+4. Watch the microphone-level indicator while speaking. Tap again to stop (or it stops at 90 seconds).
+5. Review the transcript in **Your words**, then tap **Polish my note**.
 6. Tap **Use this**.
 7. Review the final email.
 8. Tap **Create Gmail Draft**.
@@ -160,3 +160,7 @@ Override these with environment variables if needed.
 ## Local checks
 
 Run `npm test` to check local API routing, private-file isolation, request validation, and cross-origin rejection. Never commit `.env.local` or place API keys in browser code. Hosted deployments require their own environment variables; local secrets are not uploaded by Git.
+
+## Recording troubleshooting
+
+After recording, use the audio player to check what the microphone captured. An empty transcription shows a clear no-speech message instead of silently leaving an empty note. You can retry transcription without re-recording, or upload an audio file. Browser recording errors and timeouts release the controls so you can try again. Transcription logs include byte counts and status only, never the audio or transcript text.
