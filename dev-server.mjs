@@ -16,7 +16,7 @@ const publicFiles = new Map([
   ['/icon-512.png', ['icon-512.png', 'image/png']]
 ]);
 const apiRoutes = new Set([
-  'auth-status', 'auth-login', 'app-data', 'clean', 'transcribe', 'live-session',
+  'auth-status', 'auth-login', 'app-data', 'clean', 'transcribe',
   'draft', 'update-contact', 'sync-status', 'google/start', 'google/callback', 'google/setup-sheet'
 ]);
 

@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ text: transcript.replace(/\s+/g, ' ').trim(), fallback: true });
   }
   try {
-    const prompt = `You lightly edit a senior advisor's dictated warm-introduction note. Preserve his personal voice and every factual claim. Remove filler, repetitions and speech disfluencies; fix grammar; make it warm and natural. Do not add facts, praise, claims, credentials or motives that he did not say. Keep it to 2-3 short sentences and return ONLY the cleaned note, no greeting, sign-off, quotes or explanation.\n\nRecipient: ${contact.name || ''}\nCompany: ${contact.company || ''}\nReason: ${contact.introReason || ''}\nContext: ${contact.context || ''}\n\nDictation:\n${transcript}`;
+    const prompt = `You lightly edit Arun Seth's dictated warm-introduction note. Write only in English; translate any Hindi or Hinglish while keeping proper names in Roman script. Preserve his personal voice and every factual claim. Remove filler, repetitions and speech disfluencies; fix grammar; make it warm and natural. Do not add facts, praise, claims, credentials or motives that he did not say. Keep it to 2-3 short sentences and return ONLY the cleaned note, no greeting, sign-off, quotes or explanation.\n\nRecipient: ${contact.name || ''}\nCompany: ${contact.company || ''}\nReason: ${contact.introReason || ''}\nContext: ${contact.context || ''}\n\nDictation:\n${transcript}`;
     const r = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },

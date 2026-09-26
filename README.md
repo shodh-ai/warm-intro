@@ -1,13 +1,13 @@
 # Warm Intro — mobile web app
 
-A responsive internal app for Arun to process warm introductions one person at a time. The desktop workspace includes a contact queue; the phone layout uses a compact horizontal queue.
+A private mobile app for Arun Seth to process warm introductions one person at a time. The desktop workspace includes a contact queue; the phone layout uses a compact horizontal queue.
 
 ## What it does
 
 - Shows one contact card at a time, with progress and context.
 - Records Arun's voice from the phone microphone.
-- Uses `gpt-live-transcribe` for low-latency live captions when available.
-- Runs a final high-accuracy pass with `gpt-transcribe` after he stops speaking.
+- Transcribes English, Hindi and Hinglish with `gpt-transcribe` after he stops speaking.
+- Converts the transcript to English with `gpt-5.6-luna`, preserving meaning and names before showing **Your words**.
 - Uses `gpt-5.6-luna` to lightly clean the 2–3 line note without inventing facts or changing his voice.
 - Combines the personal note with the fixed Shodh email template.
 - Creates a Gmail **draft** (never auto-sends).
@@ -44,7 +44,7 @@ When you connect Google and tap **Create intro tracker sheet**, the app creates:
 
 ## Deploy to Vercel
 
-This project deliberately has no npm dependencies. It is a static mobile UI plus **12 Vercel `/api` serverless functions**, keeping it within the Hobby-plan function-count limit.
+This project deliberately has no npm dependencies. It is a static mobile UI plus **11 Vercel `/api` serverless functions**, keeping it within the Hobby-plan function-count limit.
 
 ### 1. Create a Vercel project
 
@@ -145,14 +145,14 @@ Supported subject variables:
 
 With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real note cleanup and transcription. Without Google credentials, contacts and drafts remain demo-only. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
 
-On the hosted app, the backend selects demo mode when Google or a tracker is not connected. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. Use **Reset sample introductions** (or the reset button after finishing the queue on mobile) to restart the demo.
+On the hosted app, the backend selects demo mode when Google or a tracker is not connected. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
 
 Notes are retained while switching contacts during the current page session. Settings supports Escape, keyboard focus containment, and focus restoration. The interface respects reduced motion and includes accessible form labels and progress.
 
 ## Current model defaults
 
-- live transcription: `gpt-live-transcribe`
 - final transcription: `gpt-transcribe`
+- English transcript translation: `gpt-5.6-luna`
 - light note cleanup: `gpt-5.6-luna`
 
 Override these with environment variables if needed.
