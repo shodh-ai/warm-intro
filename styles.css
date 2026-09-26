@@ -1641,3 +1641,14 @@ body { font-size: 18px; }
 #addCompanyForm { max-width: 560px; margin-top: 20px; }
 #companyFormStatus:empty { display: none; }
 #newCompanySheet p { flex-basis: 100%; }
+
+/* A people list opens one recording page at a time. */
+.workspace { display: block; max-width: 860px; margin: 0 auto; }
+.contact-queue { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; overflow: visible; }
+.queue-contact { width: 100%; padding: 18px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
+.queue-avatar { width: 44px; height: 44px; font-size: 14px; }
+.queue-person strong { font-size: 18px; }
+.queue-person small { font-size: 15px; }
+.queue-arrow { display: block; font-size: 22px; }
+#backToPeopleBtn { margin-bottom: 12px; color: var(--green); font-size: 17px; }
+#peopleListTitle:focus, #contactName:focus { outline: none; }

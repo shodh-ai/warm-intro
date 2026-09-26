@@ -47,15 +47,16 @@
       </section>
       <div id="companyBar" class="company-bar hidden"><div><span class="small muted">Introducing</span><strong id="activeCompanyName"></strong></div><button id="switchCompanyBtn" class="secondary-btn" type="button">Change company</button></div>
       <div id="workspace" class="workspace hidden" tabindex="-1">
-        <aside class="queue-panel" aria-label="Introduction queue">
-          <div class="queue-title"><h2>Your introductions</h2><span id="queueCount" class="count-badge">0</span></div>
+        <aside id="peopleList" class="queue-panel" aria-label="People to introduce">
+          <div class="queue-title"><h2 id="peopleListTitle" tabindex="-1">People to introduce</h2><span id="queueCount" class="count-badge">0</span></div>
           <div class="progress-wrap" aria-label="Progress"><div class="progress-meta"><span id="progressText">0 of 0 completed</span><span id="progressPercent">0%</span></div><div id="progressTrack" class="progress-track" role="progressbar" aria-label="Introductions completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progressBar" class="progress-bar"></div></div><span id="remainingText" class="small muted">Loading…</span></div>
           <div id="contactQueue" class="contact-queue"></div>
         </aside>
-        <div class="main-column">
+        <div id="personPage" class="main-column hidden">
+          <button id="backToPeopleBtn" class="text-btn" type="button">← Back to people</button>
           <section id="contactCard" class="card contact-card hidden" aria-label="Current introduction">
             <div class="card-kicker"><span>YOUR NEXT INTRODUCTION</span><span id="contactPosition"></span></div>
-            <div class="contact-header"><div class="avatar" id="avatar" aria-hidden="true">A</div><div class="contact-copy"><h2 id="contactName">Contact</h2><div id="contactCompany" class="company">Company</div></div><span id="contactStatus" class="pill">Needs your note</span></div>
+            <div class="contact-header"><div class="avatar" id="avatar" aria-hidden="true">A</div><div class="contact-copy"><h2 id="contactName" tabindex="-1">Contact</h2><div id="contactCompany" class="company">Company</div></div><span id="contactStatus" class="pill">Needs your note</span></div>
             <div class="context-grid"><div class="context-item"><div class="context-label">THE OPPORTUNITY</div><div id="introReason" class="context-value">—</div></div><div class="context-item"><div class="context-label">A LITTLE CONTEXT</div><div id="arunContext" class="context-value">—</div></div></div>
             <ol class="workflow" aria-label="Introduction steps"><li id="stepNote" class="active" aria-current="step"><span>1</span>Record</li><li id="stepReview"><span>2</span>Review</li><li id="stepDraft"><span>3</span>Draft</li></ol>
             <div id="voiceZone" class="voice-zone"><div class="voice-copy"><button id="typeNoteBtn" class="text-btn" type="button">Or type your note <span aria-hidden="true">↗</span></button></div><button id="micBtn" class="mic-btn" type="button" aria-label="Start recording" aria-pressed="false"><span id="micIcon" class="mic-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span><span id="micLabel" class="mic-label">Tap to speak</span><span id="timer" class="timer hidden">00:00</span></button></div>

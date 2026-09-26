@@ -45,7 +45,7 @@ function setStep(step) {
 function setBusy(busy) {
   state.busy = busy;
   document.querySelectorAll('.queue-contact').forEach(button => { button.disabled = busy || button.dataset.completed === 'true'; });
-  ['switchCompanyBtn', 'skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn'].forEach(id => { $(id).disabled = busy; });
+  ['backToPeopleBtn', 'switchCompanyBtn', 'skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn'].forEach(id => { $(id).disabled = busy; });
   $('transcript').readOnly = busy;
   $('draftBtn').disabled = busy || !currentContact() || completed(currentContact()) || !$('transcript').value.trim();
   $('micBtn').disabled = busy && !state.recording;
@@ -105,7 +105,10 @@ function resetComposer() {
 function renderContact() {
   renderProgress(); renderQueue();
   const c = currentContact();
-  show($('emptyState'), !c); show($('contactCard'), Boolean(c));
+  const listEmpty = !c && !state.contacts.length;
+  show($('peopleList'), !c); show($('personPage'), Boolean(c) || listEmpty);
+  show($('backToPeopleBtn'), Boolean(c));
+  show($('emptyState'), listEmpty); show($('contactCard'), Boolean(c));
   if (!c) return;
   resetComposer();
   $('avatar').textContent = initials(c.name); $('contactName').textContent = c.name || 'Unnamed contact'; $('contactCompany').textContent = c.company || '—';
@@ -120,7 +123,9 @@ function renderContact() {
 }
 function selectContact(id) {
   if (state.busy || state.recording) return;
-  saveComposer(); state.selectedId = id; banner(''); renderContact();
+  saveComposer(); resetComposer(); state.selectedId = id; banner(''); renderContact();
+  (id ? $('contactName') : $('peopleListTitle')).focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function readDemo() {
   try {
@@ -201,7 +206,7 @@ async function loadData() {
     if (data.company) { state.activeCompany = data.company; $('activeCompanyName').textContent = data.company.name; }
     show($('companyBar'), Boolean(state.activeCompany));
     if (state.mode === 'demo') state.contacts = readDemo() || state.contacts;
-    state.selectedId = pendingContacts()[0]?.rowNumber ?? null;
+    state.selectedId = null;
     show($('workspace'), true); renderContact();
   } catch (e) {
     show($('workspace'), false); show($('connectionCard'), false);
@@ -269,6 +274,7 @@ async function showCompanies() {
   try { await loadData(); await loadGoogleStatus(); }
   finally { show($('loadingState'), false); }
 }
+$('backToPeopleBtn').addEventListener('click', () => selectContact(null));
 $('switchCompanyBtn').addEventListener('click', showCompanies);
 $('refreshCompaniesBtn').addEventListener('click', showCompanies);
 
@@ -479,7 +485,7 @@ function nextContact() {
 }
 function resetDemo() {
   if (state.mode !== 'demo' || state.busy) return;
-  state.contacts = FALLBACK_CONTACTS.map(c => ({...c})); state.notes.clear(); state.selectedId = state.contacts[0].rowNumber; persistDemo(); banner(''); renderContact();
+  state.contacts = FALLBACK_CONTACTS.map(c => ({...c})); state.notes.clear(); state.selectedId = null; persistDemo(); banner(''); renderContact();
 }
 async function createSheet() {
   if (state.busy || !state.google?.connected) return;
