@@ -33,9 +33,9 @@ export async function getContacts(accessToken, sheetId) {
   return rowsToContacts(rows);
 }
 
-export async function getSettings(accessToken, sheetId) {
+export async function getSettings(accessToken, sheetId, defaults = DEFAULT_SETTINGS) {
   const rows = await readRange(accessToken, sheetId, 'Settings!A2:B20');
-  const out = { ...DEFAULT_SETTINGS };
+  const out = { ...defaults };
   for (const row of rows) if (row[0]) out[String(row[0])] = row[1] ?? '';
   return out;
 }

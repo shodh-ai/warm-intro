@@ -15,6 +15,7 @@ const FALLBACK_CONTACTS = [
 ];
 
 const state = {
+  activeCompany: null, companyNotes: new Map(), companies: [],
   mode: 'demo', contacts: [], settings: FALLBACK_SETTINGS, selectedId: null,
   recording: false, busy: false, stream: null, recorder: null, chunks: [], timerId: null, startedAt: 0,
   lastBlob: null, authenticated: false, google: null,
@@ -44,7 +45,7 @@ function setStep(step) {
 function setBusy(busy) {
   state.busy = busy;
   document.querySelectorAll('.queue-contact').forEach(button => { button.disabled = busy || button.dataset.completed === 'true'; });
-  ['skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn'].forEach(id => { $(id).disabled = busy; });
+  ['switchCompanyBtn', 'skipBtn', 'nextBtn', 'emptyResetBtn', 'typeNoteBtn', 'redoBtn', 'createSheetBtn', 'draftBtn', 'retryRecordingBtn'].forEach(id => { $(id).disabled = busy; });
   $('transcript').readOnly = busy;
   $('draftBtn').disabled = busy || !currentContact() || completed(currentContact()) || !$('transcript').value.trim();
   $('micBtn').disabled = busy && !state.recording;
@@ -98,7 +99,7 @@ function resetComposer() {
   $('micBtn').classList.remove('recording'); $('micBtn').setAttribute('aria-label', 'Start recording'); $('micBtn').setAttribute('aria-pressed', 'false');
   $('micIcon').innerHTML = MIC_ICON; $('micLabel').textContent = 'Tap to speak'; show($('timer'), false);
   $('draftBtn').textContent = state.mode === 'demo' ? 'OK, save demo draft ↗' : 'OK, create draft ↗';
-  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Your words come first, followed by Arun’s introduction and Arastu’s company note. Nothing is sent.';
+  $('draftHint').textContent = state.mode === 'demo' ? 'Saved in this browser only. No email will be created or sent.' : 'Your words come first, followed by this company’s email template. Nothing is sent.';
   setStep(0); setBusy(false);
 }
 function renderContact() {
@@ -156,8 +157,30 @@ async function checkAuth() {
 }
 async function loadData() {
   try {
-    const data = state.localPreview ? { mode: 'demo', contacts: FALLBACK_CONTACTS.map(c => ({...c})), settings: FALLBACK_SETTINGS } : await api('/api/app-data');
+    const data = state.localPreview ? { mode: 'demo', contacts: FALLBACK_CONTACTS.map(c => ({...c})), settings: FALLBACK_SETTINGS } : await api(state.activeCompany ? `/api/app-data?companyId=${encodeURIComponent(state.activeCompany.id)}` : '/api/app-data?view=companies');
     state.mode = data.mode || 'demo'; state.contacts = data.contacts || []; state.settings = { ...FALLBACK_SETTINGS, ...data.settings }; state.google = data.google || null;
+    if (data.mode === 'companies') {
+      state.companies = data.companies || [];
+      show($('connectionCard'), false); show($('workspace'), false); show($('companyBar'), false);
+      $('modeBadge').textContent = 'Google connected';
+      $('settingsModeTitle').textContent = 'Your companies';
+      $('settingsModeDescription').textContent = 'Each company has its own tracker and email template. Drafts go to your connected Gmail account.';
+      $('companyCards').replaceChildren();
+      for (const company of state.companies) {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'company-card';
+        const avatar = document.createElement('span'); avatar.className = 'avatar'; avatar.textContent = initials(company.name); avatar.setAttribute('aria-hidden', 'true');
+        const name = document.createElement('strong'); name.textContent = company.name;
+        const description = document.createElement('span'); description.className = 'muted'; description.textContent = company.description || 'View people and make introductions';
+        const action = document.createElement('span'); action.className = 'company-card-action'; action.textContent = 'Open introductions →';
+        button.append(avatar, name, description, action); button.addEventListener('click', () => chooseCompany(company));
+        $('companyCards').append(button);
+      }
+      $('companiesSheetLink').href = data.registryUrl;
+      show($('companiesSheetLink'), true); show($('companiesHelp'), true);
+      show($('companyPicker'), true);
+      return;
+    }
+    show($('companyPicker'), false);
     const needsConnection = !state.localPreview && state.mode !== 'google';
     show($('connectionCard'), needsConnection);
     if (needsConnection) {
@@ -172,15 +195,42 @@ async function loadData() {
       $('settingsModeDescription').textContent = 'Connect Google to use the contacts in your tracker and create Gmail drafts.';
       return;
     }
+    if (data.company) { state.activeCompany = data.company; $('activeCompanyName').textContent = data.company.name; }
+    show($('companyBar'), Boolean(state.activeCompany));
     if (state.mode === 'demo') state.contacts = readDemo() || state.contacts;
     state.selectedId = pendingContacts()[0]?.rowNumber ?? null;
     show($('workspace'), true); renderContact();
   } catch (e) {
     show($('workspace'), false); show($('connectionCard'), false);
+    show($('companyBar'), Boolean(state.activeCompany));
+    if (state.activeCompany) $('activeCompanyName').textContent = state.activeCompany.name;
     if (e.status === 401) { state.authenticated = false; show($('unlockCard'), true); }
-    banner('Your introductions could not load. Please refresh or check your Google connection in Settings.', 'error');
+    banner(e.message || 'Your introductions could not load. Please try again.', 'error');
   }
 }
+async function chooseCompany(company) {
+  if (state.busy || state.recording) return;
+  state.activeCompany = company;
+  state.notes = state.companyNotes.get(company.id) || new Map();
+  state.companyNotes.set(company.id, state.notes);
+  state.contacts = []; state.selectedId = null;
+  resetComposer(); banner('');
+  show($('companyPicker'), false); show($('loadingState'), true);
+  try { await loadData(); await loadGoogleStatus(); }
+  finally { show($('loadingState'), false); }
+}
+async function showCompanies() {
+  if (state.busy || state.recording) return;
+  saveComposer(); resetComposer();
+  state.activeCompany = null; state.contacts = []; state.selectedId = null;
+  show($('workspace'), false); show($('companyBar'), false); show($('companyPicker'), false);
+  show($('loadingState'), true); banner('');
+  try { await loadData(); await loadGoogleStatus(); }
+  finally { show($('loadingState'), false); }
+}
+$('switchCompanyBtn').addEventListener('click', showCompanies);
+$('refreshCompaniesBtn').addEventListener('click', showCompanies);
+
 async function loadGoogleStatus() {
   if (state.google?.connected) {
     $('googleStatus').textContent = `Connected as ${state.google.email || 'Google user'}`; $('googleConnectBtn').textContent = 'Reconnect';
@@ -189,6 +239,7 @@ async function loadGoogleStatus() {
     $('googleStatus').textContent = state.localPreview ? 'Available on the hosted app' : state.authenticated ? 'Not connected' : 'Unlock the workspace first';
     $('googleConnectBtn').textContent = 'Connect Google'; show($('sheetLink'), false);
   }
+  show($('createSheetBtn'), Boolean(state.google?.connected && !state.google.sheetId));
   const unavailable = state.localPreview || !state.authenticated;
   $('googleConnectBtn').setAttribute('aria-disabled', unavailable);
   $('googleConnectBtn').tabIndex = unavailable ? -1 : 0;
@@ -341,7 +392,7 @@ async function createDraft() {
     if (state.mode === 'google') {
       let result;
       try {
-        result = await api('/api/draft', { method: 'POST', body: { rowNumber: c.rowNumber, cleanedNote: reviewedNote, transcript: reviewedNote } });
+        result = await api('/api/draft', { method: 'POST', body: { companyId: state.activeCompany?.id, rowNumber: c.rowNumber, cleanedNote: reviewedNote, transcript: reviewedNote } });
       } catch (error) {
         if (!error.data?.draftCreated || !error.data?.draftId) throw error;
         result = error.data;
@@ -374,7 +425,7 @@ async function skipCurrent() {
   const c = currentContact(); if (!c || state.busy || completed(c)) return;
   setBusy(true);
   try {
-    if (state.mode === 'google') await api('/api/update-contact', { method: 'POST', body: { rowNumber: c.rowNumber, patch: { status: 'Skipped' } } });
+    if (state.mode === 'google') await api('/api/update-contact', { method: 'POST', body: { companyId: state.activeCompany?.id, rowNumber: c.rowNumber, patch: { status: 'Skipped' } } });
     c.status = 'Skipped'; persistDemo(); setBusy(false); nextContact();
   } catch (e) { banner(e.message, 'error'); }
   finally { setBusy(false); }
@@ -406,44 +457,6 @@ function closeDrawer() {
   const drawer = $('settingsDrawer'); $('appShell').inert = false; $('settingsBtn').focus(); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); drawer.inert = true;
   show($('drawerBackdrop'), false); document.body.classList.remove('drawer-open');
 }
-// Native installation must start from a tap; iPhone uses Safari's Share menu.
-let installPrompt = null;
-const standaloneDisplay = window.matchMedia('(display-mode: standalone)');
-const applePhone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-$('installInstructions').textContent = applePhone
-  ? 'Open this page in Safari. Tap Share, then Add to Home Screen, then Add. If shown, leave Open as Web App switched on.'
-  : /Android/i.test(navigator.userAgent)
-    ? 'In Chrome, tap the three-dot menu, then Install app or Add to Home screen. If you are in another app’s browser, open this page in Chrome first.'
-    : 'On your phone, open this page in Safari or Chrome and choose Add to Home Screen from the browser menu. On a computer, look for Install in the browser’s address bar or menu.';
-function updateInstallVisibility() {
-  show($('installPanel'), !standaloneDisplay.matches && !navigator.standalone);
-}
-updateInstallVisibility();
-standaloneDisplay.addEventListener('change', updateInstallVisibility);
-window.addEventListener('beforeinstallprompt', event => {
-  event.preventDefault(); installPrompt = event;
-  show($('installAppBtn'), true);
-});
-$('installAppBtn').addEventListener('click', async () => {
-  if (!installPrompt) return;
-  const prompt = installPrompt; installPrompt = null;
-  $('installAppBtn').disabled = true;
-  try {
-    await prompt.prompt();
-    const choice = await prompt.userChoice;
-    $('installStatus').textContent = choice.outcome === 'accepted'
-      ? 'Installation requested. Look for Warm Intro on your home screen.'
-      : 'You can install later using your browser menu.';
-  } catch {
-    $('installStatus').textContent = 'Use your browser menu to install the app instead.';
-  } finally {
-    show($('installAppBtn'), Boolean(installPrompt)); $('installAppBtn').disabled = false;
-  }
-});
-window.addEventListener('appinstalled', () => {
-  installPrompt = null; show($('installPanel'), false);
-});
-
 $('settingsBtn').addEventListener('click', openDrawer);
 $('trackerSettingsBtn').addEventListener('click', openDrawer);
 $('closeSettings').addEventListener('click', closeDrawer);
@@ -478,6 +491,6 @@ $('unlockForm').addEventListener('submit', async e => {
 window.addEventListener('pagehide', () => { releaseRecording(); if (state.recordingUrl) URL.revokeObjectURL(state.recordingUrl); });
 (async function init() {
   if (await checkAuth()) { await loadData(); await loadGoogleStatus(); }
-  if (new URLSearchParams(location.search).get('connected') && state.google?.connected) { banner('Google connected. Open Settings to create or open your tracker.'); history.replaceState({}, '', location.pathname); }
+  if (new URLSearchParams(location.search).get('connected') && state.google?.connected) { banner('Google connected. Choose a company to get started.'); history.replaceState({}, '', location.pathname); }
 })();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});

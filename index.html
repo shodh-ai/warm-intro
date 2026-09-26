@@ -21,13 +21,6 @@
       <div class="topbar-actions"><span id="modeBadge" class="mode-badge">Connecting…</span><button id="settingsBtn" class="settings-btn" aria-label="Open settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg><span>Settings</span></button><span class="user-avatar" aria-label="Arun Seth">A</span></div>
     </header>
     <main>
-      <details id="installPanel" class="install-panel">
-        <summary>Install app on your phone <span aria-hidden="true">↗</span></summary>
-        <p class="small muted">Keep Warm Intro on your home screen for easy access.</p>
-        <p id="installInstructions" class="small">On your phone, open this page in Safari or Chrome and choose Add to Home Screen from the browser menu.</p>
-        <button id="installAppBtn" class="secondary-btn hidden" type="button">Install app</button>
-        <p id="installStatus" class="small muted" role="status"></p>
-      </details>
       <section id="statusBanner" class="status-banner hidden" role="status" aria-live="polite"></section>
       <section id="loadingState" class="loading-state" role="status"><span class="loading-dot"></span>Getting your introductions ready…</section>
       <section id="unlockCard" class="card unlock-card hidden">
@@ -40,6 +33,13 @@
         <a id="connectWorkspaceBtn" class="primary-btn link-btn" href="/api/google/start">Connect Google</a>
         <button id="trackerSettingsBtn" class="primary-btn hidden" type="button">Open tracker settings</button>
       </section>
+      <section id="companyPicker" class="company-picker hidden" aria-labelledby="companyPickerTitle">
+        <h1 id="companyPickerTitle">Who are we introducing today?</h1>
+        <p class="muted">Choose a company to see its people and make introductions.</p>
+        <div id="companyCards" class="company-cards"></div>
+        <button id="refreshCompaniesBtn" class="text-btn" type="button">Refresh companies</button>
+      </section>
+      <div id="companyBar" class="company-bar hidden"><div><span class="small muted">Introducing</span><strong id="activeCompanyName"></strong></div><button id="switchCompanyBtn" class="secondary-btn" type="button">Change company</button></div>
       <div id="workspace" class="workspace hidden" tabindex="-1">
         <aside class="queue-panel" aria-label="Introduction queue">
           <div class="queue-title"><h2>Your introductions</h2><span id="queueCount" class="count-badge">0</span></div>
@@ -60,7 +60,7 @@
               <div class="section-head"><label for="transcript">Your words <span class="small muted">· English</span></label><button id="redoBtn" class="text-btn" type="button">Record again</button></div>
               <textarea id="transcript" class="textarea" rows="4" placeholder="I thought of you because…" aria-describedby="draftHint"></textarea>
               <button id="draftBtn" class="primary-btn draft-btn" type="button" disabled>OK, create draft <span aria-hidden="true">↗</span></button>
-              <p id="draftHint" class="small muted draft-hint">Your words come first, followed by Arun’s introduction and Arastu’s company note. Nothing is sent.</p>
+              <p id="draftHint" class="small muted draft-hint">Your words come first, followed by this company’s email template. Nothing is sent.</p>
             </div>
             <div id="draftSuccess" class="success-panel hidden" role="status"><div class="success-icon" aria-hidden="true">✓</div><div><strong id="successTitle">Draft created</strong><div id="successMessage" class="small muted">Ready in Gmail for your final review.</div></div><a id="openGmailBtn" class="secondary-btn link-btn" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail ↗</a><a id="gmailWebBtn" class="text-btn hidden" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Gmail in browser</a><p id="gmailAppHint" class="small muted hidden" style="flex-basis:100%"></p></div>
             <details id="emailSection" class="editor-section hidden"><summary class="section-head">View saved draft</summary><div id="emailPreview" class="email-preview"><div class="mail-row"><span>To</span><strong id="emailTo">—</strong></div><div class="mail-row"><span>Subject</span><strong id="emailSubject">—</strong></div><div id="emailBody" class="email-body"></div></div></details>
@@ -76,7 +76,8 @@
   <aside id="settingsDrawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true" inert>
     <div class="drawer-head"><div><div class="eyebrow">YOUR WORKSPACE</div><h2 id="settingsTitle">Connections</h2></div><button id="closeSettings" class="icon-btn" aria-label="Close settings">✕</button></div>
     <div class="settings-block"><div class="settings-row"><div><strong>Google account</strong><div id="googleStatus" class="muted small">Checking…</div></div><a id="googleConnectBtn" class="secondary-btn link-btn" href="/api/google/start">Connect</a></div><button id="createSheetBtn" class="secondary-btn full-btn" type="button">Create intro tracker sheet</button><a id="sheetLink" class="sheet-link hidden" target="_blank" rel="noopener">Open tracker in Google Sheets ↗</a></div>
-    <div class="settings-block"><strong>Arun’s introduction flow</strong><ol class="mini-steps"><li>Read the person’s details and record your note.</li><li>Review or edit the English text, then tap OK, create draft.</li><li>Your words, Arun’s introduction and Arastu’s company note are saved together in Gmail drafts.</li></ol></div>
+    <div class="settings-block"><a id="companiesSheetLink" class="sheet-link hidden" target="_blank" rel="noopener">Manage companies in Google Sheets ↗</a><p id="companiesHelp" class="small muted hidden">In the Companies tab, add a company name and its tracker Sheet link. Each tracker needs Contacts and Settings tabs. Share that Sheet with the connected Google account.</p></div>
+    <div class="settings-block"><strong>Arun’s introduction flow</strong><ol class="mini-steps"><li>Read the person’s details and record your note.</li><li>Review or edit the English text, then tap OK, create draft.</li><li>Your words and the selected company’s email template are saved together in Gmail drafts.</li></ol></div>
     <div class="settings-block subtle"><strong id="settingsModeTitle">Try it with sample contacts</strong><p id="settingsModeDescription" class="muted small">Demo drafts stay in this browser. Connect Google and a tracker to create real Gmail drafts.</p></div>
     <p class="small muted">Your Google connection keeps your tracker and drafts together. You’re always in control of what gets sent.</p>
   </aside>

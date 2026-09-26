@@ -1,3 +1,4 @@
+import { resolveCompany, companyDefaults } from './_lib/companies.js';
 import { accessTokenFromSession, googleFetch } from './_lib/google.js';
 import { getContacts, getSettings, updateContactRow } from './_lib/data.js';
 import { getGoogleSession, requireAppAuth } from './_lib/security.js';
@@ -22,7 +23,8 @@ export default async function handler(req, res) {
   if (!cleanedNote) return res.status(400).json({ error: 'Review and approve your note before creating a draft.' });
   try {
     const { accessToken } = await accessTokenFromSession(req, res);
-    const [contacts, settings] = await Promise.all([getContacts(accessToken, session.sheetId), getSettings(accessToken, session.sheetId)]);
+    const company = await resolveCompany(accessToken, session, req.body?.companyId);
+    const [contacts, settings] = await Promise.all([getContacts(accessToken, company.id), getSettings(accessToken, company.id, companyDefaults(company, session))]);
     const current = contacts.find(c => c.rowNumber === rowNumber);
     if (!current) return res.status(404).json({ error: 'Contact not found' });
     const sheetEmail = String(current.email || '').trim();
@@ -33,7 +35,7 @@ export default async function handler(req, res) {
     const deck = String(settings.deck_url || '').trim();
     if (deck && !/^https:\/\/[^\s]+$/i.test(deck)) return res.status(400).json({ error: 'Use an HTTPS deck link in the tracker Settings, or leave it blank.' });
     const subject = subjectFor(settings.email_subject, current);
-    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `More about Shodh — from Arastu:\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
+    const body = [`Hi ${firstName(current.name)},`, cleanedNote, settings.fixed_template, settings.signature, settings.founder_note ? `${settings.founder_heading || (companyDefaults(company, session) ? `More about ${company.name}:` : 'More about Shodh — from Arastu:')}\n\n${settings.founder_note}` : '', deck ? `Company deck: ${deck}` : ''].filter(part => String(part || '').trim()).join('\n\n').trim();
     const raw = [
       ...(recipient ? [`To: ${recipient}`] : []),
       ...(cc ? [`Cc: ${cc}`] : []),
@@ -56,7 +58,7 @@ export default async function handler(req, res) {
     const result = { draftCreated: true, draftId: draft.id, subject, body, cc, recipient, gmailUrl: 'https://mail.google.com/mail/u/0/#drafts' };
     let updated;
     try {
-      updated = await updateContactRow(accessToken, session.sheetId, current.rowNumber, {
+      updated = await updateContactRow(accessToken, company.id, current.rowNumber, {
         arunNote: typeof req.body?.transcript === 'string' ? req.body.transcript : cleanedNote,
         cleanedNote, status: 'Draft Ready', draftId: draft.id, draftCreated: now.toISOString(), followupDate: follow
       }, current);

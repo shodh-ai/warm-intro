@@ -1586,10 +1586,6 @@ a[aria-disabled="true"] {
 .voice-copy { flex: 0 0 auto; text-align: center; }
 .voice-copy .text-btn { margin-top: 0; }
 
-.install-panel { margin: 0 0 18px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
-.install-panel summary { cursor: pointer; font-size: 13px; font-weight: 600; min-height: 24px; line-height: 24px; }
-.install-panel p { margin: 10px 0; line-height: 1.7; }
-.install-panel p:empty { display: none; }
 
 /* Readable type and comfortable controls, including on small phones. */
 body { font-size: 18px; }
@@ -1611,7 +1607,6 @@ body { font-size: 18px; }
 .workflow li > span { font-size: 12px; width: 26px; height: 26px; }
 .mic-btn { width: 124px; height: 124px; }
 .mic-label, .timer { font-size: 14px; }
-.install-panel summary { font-size: 16px; min-height: 44px; line-height: 1.5; padding: 10px 0; }
 .mail-row { grid-template-columns: 65px minmax(0, 1fr); }
 .section-head, .nav-actions, .settings-row { flex-wrap: wrap; }
 @media (max-width: 760px) {
@@ -1624,3 +1619,16 @@ body { font-size: 18px; }
   .workflow li { gap: 4px; }
   .workflow li:not(:last-child):after { margin-left: 2px; }
 }
+
+.company-picker { max-width: 960px; margin: 32px auto; }
+.company-picker h1 { font-size: 32px; letter-spacing: -.7px; }
+.company-picker > p { line-height: 1.6; }
+.company-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; margin: 26px 0 12px; }
+.company-card { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; text-align: left; padding: 26px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); color: var(--text); overflow-wrap: anywhere; }
+.company-card:hover { border-color: var(--green); background: #f8fbf5; }
+.company-card strong { font-size: 24px; }
+.company-card .muted { font-size: 16px; line-height: 1.6; }
+.company-card-action { margin-top: auto; padding-top: 10px; font-size: 16px; color: var(--green); }
+.company-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 20px 0; }
+.company-bar strong { display: block; font-size: 23px; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .company-picker { margin-top: 20px; } .company-picker h1 { font-size: 28px; } .company-bar { padding-top: 0; } }

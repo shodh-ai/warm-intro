@@ -161,3 +161,21 @@ Run `npm test` to check local API routing, private-file isolation, request valid
 ## Recording troubleshooting
 
 After recording, use the audio player to check what the microphone captured. An empty transcription shows a clear no-speech message instead of silently leaving an empty note. You can retry transcription without re-recording, record again, or type your note. Browser recording errors and timeouts release the controls so you can try again. Transcription logs include byte counts and status only, never the audio or transcript text.
+
+
+### Multiple companies
+
+After Google connection, the app shows a company picker. The existing configured
+`GOOGLE_SHEET_ID` remains the shared registry and Shodh AI tracker. Its `Companies`
+tab uses columns A:C: `Company name`, `Tracker Sheet link`, `Description`.
+Add each other company's name and Google Sheets URL in a new row (rows 2–100).
+Each tracker needs the same `Contacts` columns and `Settings` key/value layout as
+the original tracker, and must be shared with every Google account using it.
+Configure that company's own `email_subject`, `fixed_template`, `signature`, and
+optional `founder_note`, `founder_heading`, `cc_email`, and `deck_url` in Settings.
+Other companies never inherit Shodh's default wording.
+
+Use **Change company** to return to the picker. Refresh companies reloads the
+registry. Unsaved typed notes remain separate per company while the page is open;
+recordings and unsaved notes are not retained after a page reload. Draft creation
+and status writes validate the selected company against the registry each time.
