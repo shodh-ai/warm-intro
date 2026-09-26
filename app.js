@@ -112,7 +112,7 @@ function renderContact() {
   if (!c) return;
   resetComposer();
   $('avatar').textContent = initials(c.name); $('contactName').textContent = c.name || 'Unnamed contact'; $('contactCompany').textContent = c.company || '—';
-  $('introReason').textContent = c.introReason || 'A thoughtful introduction'; $('arunContext').textContent = c.context || 'Add a personal note about why you’d like to connect.';
+  $('arunContext').textContent = c.context || 'Add a personal note about why you’d like to connect.';
   $('contactStatus').textContent = 'Needs your note'; $('emailTo').textContent = c.email || 'Add recipient in Gmail';
   $('contactPosition').textContent = `${state.contacts.indexOf(c) + 1} / ${state.contacts.length}`;
   const saved = state.notes.get(c.rowNumber) || { transcript: c.cleanedNote || c.arunNote || '' };
