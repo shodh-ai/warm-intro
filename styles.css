@@ -1590,3 +1590,37 @@ a[aria-disabled="true"] {
 .install-panel summary { cursor: pointer; font-size: 13px; font-weight: 600; min-height: 24px; line-height: 24px; }
 .install-panel p { margin: 10px 0; line-height: 1.7; }
 .install-panel p:empty { display: none; }
+
+/* Readable type and comfortable controls, including on small phones. */
+body { font-size: 18px; }
+.small, .settings-row .small, .queue-person small, .progress-meta,
+.progress-wrap > .small, .draft-hint, .privacy-note { font-size: 14px; }
+.context-value, .textarea, .input, .email-body { font-size: 18px; line-height: 1.7; }
+.company, .queue-person strong, .section-head, .stack label,
+.settings-block strong, .success-panel strong, .mail-row,
+.empty-state p, .unlock-card p, .status-banner, .recording-status,
+.recording-preview label, .sheet-link, .mini-steps { font-size: 16px; }
+.queue-title h2 { font-size: 18px; }
+.contact-copy h2 { font-size: 28px; line-height: 1.2; }
+.eyebrow, .card-kicker, .context-label, .pill, .count-badge { font-size: 12px; }
+.card-kicker, .context-label { letter-spacing: .8px; }
+.primary-btn, .secondary-btn, .ghost-btn, .text-btn,
+.nav-actions .ghost-btn, .nav-actions .text-btn,
+.voice-copy .text-btn, .settings-row .link-btn { font-size: 16px; min-height: 48px; }
+.workflow li { font-size: 14px; }
+.workflow li > span { font-size: 12px; width: 26px; height: 26px; }
+.mic-btn { width: 124px; height: 124px; }
+.mic-label, .timer { font-size: 14px; }
+.install-panel summary { font-size: 16px; min-height: 44px; line-height: 1.5; padding: 10px 0; }
+.mail-row { grid-template-columns: 65px minmax(0, 1fr); }
+.section-head, .nav-actions, .settings-row { flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .topbar { height: auto; min-height: 76px; flex-wrap: wrap; padding: 12px 0; gap: 8px; }
+  .mode-badge { font-size: 12px; }
+  .queue-contact { flex-basis: 225px; }
+  .context-grid { grid-template-columns: minmax(0, 1fr); }
+  .context-item + .context-item { padding-left: 0; border-left: 0; }
+  .workflow { gap: 6px; }
+  .workflow li { gap: 4px; }
+  .workflow li:not(:last-child):after { margin-left: 2px; }
+}
