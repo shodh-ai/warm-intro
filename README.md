@@ -54,7 +54,6 @@ Copy the values from `.env.example` into Vercel Project → Settings → Environ
 Required:
 
 - `OPENAI_API_KEY`
-- `APP_ACCESS_CODE`
 - `APP_SECRET` (use a long random value)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
@@ -92,7 +91,7 @@ Google bundles draft management and sending into `gmail.compose`; the app only c
 
 ### 4. Open the app
 
-- Enter the private app access code.
+- Open the app; no access code is required.
 - Settings → **Connect Google**.
 - Sign in with Arun's Google account.
 - The configured tracker loads automatically. Create a tracker only if none is configured.
@@ -138,14 +137,14 @@ Supported subject variables:
 - The OpenAI API key and Google client secret never go to the browser.
 - Google refresh credentials are encrypted into an HttpOnly cookie using `APP_SECRET` rather than stored in frontend JavaScript.
 - Set `ALLOWED_GOOGLE_EMAIL` for a single-advisor production deployment.
-- Set a private `APP_ACCESS_CODE` because transcription endpoints consume paid API resources.
+- The deployment opens without an access code. Google sign-in is required to read the tracker and create Gmail drafts.
 - The app creates drafts only; Arun remains the person who sends the email.
 
 ## Demo mode
 
 With Node.js 22 or newer, run `npm run dev` and open `http://localhost:4173`. The dependency-free local server runs the same API handlers as Vercel. Add `OPENAI_API_KEY` to a private, gitignored `.env.local` file and restart the server to enable real transcription. Without a Google connection, the server asks you to connect Google and shows no sample contacts. The local server listens only on loopback and serves an explicit public-file allowlist; environment files and backend source are never served. Demo drafts are explicitly labeled and stored only in the current browser.
 
-On the hosted app, a missing Google connection or tracker shows a connection screen, never a sample contact list. The private access code and Google connection are separate, and Google must be connected in each browser. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
+On the hosted app, a missing Google connection or tracker shows a connection screen, never a sample contact list. Google must be connected in each browser. Authentication and data errors are shown explicitly rather than silently switching a connected workspace to demo data. The reset button after finishing the queue restarts the demo.
 
 Notes are retained while switching contacts during the current page session. Settings supports Escape, keyboard focus containment, and focus restoration. The interface respects reduced motion and includes accessible form labels and progress.
 
