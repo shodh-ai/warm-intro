@@ -18,7 +18,7 @@ export function companySpreadsheet(name) {
   ];
   return {properties:{title:`${name} — Warm Intro Tracker`},sheets:sheets.map((sheet,i)=>({
     properties:{sheetId:i,title:sheet.title,gridProperties:{rowCount:1000,columnCount:sheet.columns,frozenRowCount:1}},
-    data:[{startRow:0,startColumn:0,rowData:sheet.rows.map((r,index)=>({values:r.values.map(c=>({...c,userEnteredFormat:{wrapStrategy:'WRAP',verticalAlignment:'TOP',textFormat:{fontSize:12,...(index===0?{bold:true,foregroundColor:{red:1,green:1,blue:1}}:{})},...(index===0?{backgroundColor:{red:.19,green:.36,blue:.26}}:{})}}))})),columnMetadata:Array.from({length:sheet.columns},(_,col)=>({pixelSize:sheet.title==='Settings'&&col===1?560:col===2||col===3?380:240,...(sheet.columns===16&&col>=5?{hiddenByUser:true}:{})}))}]
+    data:[{startRow:0,startColumn:0,rowData:sheet.rows.map((r,index)=>({values:r.values.map(c=>({...c,userEnteredFormat:{wrapStrategy:'WRAP',verticalAlignment:'TOP',textFormat:{fontSize:12,...(index===0?{bold:true,foregroundColor:{red:1,green:1,blue:1}}:{})},...(index===0?{backgroundColor:{red:.19,green:.36,blue:.26}}:{})}}))})),rowMetadata:Array.from({length:21},(_,index)=>({pixelSize:index===0?40:112})),columnMetadata:Array.from({length:sheet.columns},(_,col)=>({pixelSize:sheet.title==='Settings'&&col===1?560:([160,210,250,300,220][col]||200),...(sheet.columns===16&&col>=5?{hiddenByUser:true}:{})}))}]
   }))};
 }
 export async function createCompany(req,res,accessToken,session) {
