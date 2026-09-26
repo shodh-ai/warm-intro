@@ -406,6 +406,44 @@ function closeDrawer() {
   const drawer = $('settingsDrawer'); $('appShell').inert = false; $('settingsBtn').focus(); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); drawer.inert = true;
   show($('drawerBackdrop'), false); document.body.classList.remove('drawer-open');
 }
+// Native installation must start from a tap; iPhone uses Safari's Share menu.
+let installPrompt = null;
+const standaloneDisplay = window.matchMedia('(display-mode: standalone)');
+const applePhone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+$('installInstructions').textContent = applePhone
+  ? 'Open this page in Safari. Tap Share, then Add to Home Screen, then Add. If shown, leave Open as Web App switched on.'
+  : /Android/i.test(navigator.userAgent)
+    ? 'In Chrome, tap the three-dot menu, then Install app or Add to Home screen. If you are in another app’s browser, open this page in Chrome first.'
+    : 'On your phone, open this page in Safari or Chrome and choose Add to Home Screen from the browser menu. On a computer, look for Install in the browser’s address bar or menu.';
+function updateInstallVisibility() {
+  show($('installPanel'), !standaloneDisplay.matches && !navigator.standalone);
+}
+updateInstallVisibility();
+standaloneDisplay.addEventListener('change', updateInstallVisibility);
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault(); installPrompt = event;
+  show($('installAppBtn'), true);
+});
+$('installAppBtn').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  const prompt = installPrompt; installPrompt = null;
+  $('installAppBtn').disabled = true;
+  try {
+    await prompt.prompt();
+    const choice = await prompt.userChoice;
+    $('installStatus').textContent = choice.outcome === 'accepted'
+      ? 'Installation requested. Look for Warm Intro on your home screen.'
+      : 'You can install later using your browser menu.';
+  } catch {
+    $('installStatus').textContent = 'Use your browser menu to install the app instead.';
+  } finally {
+    show($('installAppBtn'), Boolean(installPrompt)); $('installAppBtn').disabled = false;
+  }
+});
+window.addEventListener('appinstalled', () => {
+  installPrompt = null; show($('installPanel'), false);
+});
+
 $('settingsBtn').addEventListener('click', openDrawer);
 $('trackerSettingsBtn').addEventListener('click', openDrawer);
 $('closeSettings').addEventListener('click', closeDrawer);

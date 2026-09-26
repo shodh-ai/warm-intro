@@ -1,4 +1,4 @@
-const CACHE = 'warm-intro-v12';
+const CACHE = 'warm-intro-v13';
 const STATIC = ['/', '/index.html', '/styles.css', '/app.js', '/audio-recording.js', '/gmail-navigation.js', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('warm-intro-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));

@@ -21,6 +21,13 @@
       <div class="topbar-actions"><span id="modeBadge" class="mode-badge">Connecting…</span><button id="settingsBtn" class="settings-btn" aria-label="Open settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg><span>Settings</span></button><span class="user-avatar" aria-label="Arun Seth">A</span></div>
     </header>
     <main>
+      <details id="installPanel" class="install-panel">
+        <summary>Install app on your phone <span aria-hidden="true">↗</span></summary>
+        <p class="small muted">Keep Warm Intro on your home screen for easy access.</p>
+        <p id="installInstructions" class="small">On your phone, open this page in Safari or Chrome and choose Add to Home Screen from the browser menu.</p>
+        <button id="installAppBtn" class="secondary-btn hidden" type="button">Install app</button>
+        <p id="installStatus" class="small muted" role="status"></p>
+      </details>
       <section id="statusBanner" class="status-banner hidden" role="status" aria-live="polite"></section>
       <section id="loadingState" class="loading-state" role="status"><span class="loading-dot"></span>Getting your introductions ready…</section>
       <section id="unlockCard" class="card unlock-card hidden">
