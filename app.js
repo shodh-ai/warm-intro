@@ -170,10 +170,13 @@ async function loadData() {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'company-card';
         const avatar = document.createElement('span'); avatar.className = 'avatar'; avatar.textContent = initials(company.name); avatar.setAttribute('aria-hidden', 'true');
         const name = document.createElement('strong'); name.textContent = company.name;
-        const description = document.createElement('span'); description.className = 'muted'; description.textContent = company.description || 'View people and make introductions';
+        const card = document.createElement('article'); card.className = 'company-tile';
         const action = document.createElement('span'); action.className = 'company-card-action'; action.textContent = 'Open introductions →';
-        button.append(avatar, name, description, action); button.addEventListener('click', () => chooseCompany(company));
-        $('companyCards').append(button);
+        button.append(avatar, name, action); button.addEventListener('click', () => chooseCompany(company));
+        const actions = document.createElement('div'); actions.className = 'company-sheet-actions';
+        const link = document.createElement('a'); link.className = 'text-btn'; link.href = `https://docs.google.com/spreadsheets/d/${company.id}/edit`; link.target = '_blank'; link.rel = 'noopener'; link.textContent = 'Open Sheet ↗'; link.setAttribute('aria-label', `Open ${company.name} Sheet`);
+        const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'text-btn'; copy.textContent = 'Copy Sheet link'; copy.setAttribute('aria-label', `Copy ${company.name} Sheet link`); copy.addEventListener('click', () => copySheetLink(link.href, copy));
+        actions.append(link, copy); card.append(button, actions); $('companyCards').append(card);
       }
       $('companiesSheetLink').href = data.registryUrl;
       show($('companiesSheetLink'), true); show($('companiesHelp'), true);
@@ -208,6 +211,44 @@ async function loadData() {
     banner(e.message || 'Your introductions could not load. Please try again.', 'error');
   }
 }
+let pendingCompanyRegistration = null;
+async function copySheetLink(url, button) {
+  try { await navigator.clipboard.writeText(url); button.textContent = 'Link copied ✓'; }
+  catch { banner(`Copy this Sheet link: ${url}`); }
+}
+$('addCompanyBtn').addEventListener('click', () => { show($('addCompanyForm'), true); $('newCompanyName').focus(); });
+$('cancelCompanyBtn').addEventListener('click', () => show($('addCompanyForm'), false));
+$('copyCompanySheetBtn').addEventListener('click', () => copySheetLink($('newCompanySheetLink').href, $('copyCompanySheetBtn')));
+$('addCompanyForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.busy) return;
+  const companyName = $('newCompanyName').value.trim();
+  if (!companyName) return;
+  const submit = $('saveCompanyBtn');
+  state.busy = true; submit.disabled = true; $('cancelCompanyBtn').disabled = true; $('newCompanyName').readOnly = true;
+  document.querySelectorAll('.company-card').forEach(button => { button.disabled = true; });
+  $('refreshCompaniesBtn').disabled = true; submit.textContent = 'Creating…'; $('companyFormStatus').textContent = '';
+  try {
+    const result = await api('/api/google/setup-sheet', {method:'POST',body:{companyName, registrationToken:pendingCompanyRegistration}});
+    pendingCompanyRegistration = null;
+    $('newCompanySheetLink').href = result.sheetUrl; $('copyCompanySheetBtn').textContent = 'Copy Sheet link';
+    show($('newCompanySheet'), true); show($('addCompanyForm'), false); $('newCompanyName').value = '';
+    await loadData();
+  } catch(error) {
+    $('companyFormStatus').textContent = error.message;
+    if(error.data?.sheetCreated) {
+      pendingCompanyRegistration = error.data.registrationToken;
+      $('newCompanySheetLink').href = error.data.sheetUrl; show($('newCompanySheet'), true);
+    }
+  } finally {
+    state.busy = false; submit.disabled = false; $('cancelCompanyBtn').disabled = false;
+    $('newCompanyName').readOnly = Boolean(pendingCompanyRegistration);
+    submit.textContent = pendingCompanyRegistration ? 'Retry linking Sheet' : 'Create company & Sheet';
+    document.querySelectorAll('.company-card').forEach(button => { button.disabled = false; });
+    $('refreshCompaniesBtn').disabled = false;
+  }
+});
+
 async function chooseCompany(company) {
   if (state.busy || state.recording) return;
   state.activeCompany = company;

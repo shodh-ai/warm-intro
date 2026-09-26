@@ -33,9 +33,15 @@
         <a id="connectWorkspaceBtn" class="primary-btn link-btn" href="/api/google/start">Connect Google</a>
         <button id="trackerSettingsBtn" class="primary-btn hidden" type="button">Open tracker settings</button>
       </section>
-      <section id="companyPicker" class="company-picker hidden" aria-labelledby="companyPickerTitle">
-        <h1 id="companyPickerTitle">Who are we introducing today?</h1>
-        <p class="muted">Choose a company to see its people and make introductions.</p>
+      <section id="companyPicker" class="company-picker hidden" aria-label="Companies">
+        <button id="addCompanyBtn" class="primary-btn" type="button">＋ Add company</button>
+        <form id="addCompanyForm" class="card stack hidden">
+          <label for="newCompanyName">Company name</label>
+          <input id="newCompanyName" class="input" maxlength="80" required placeholder="Company name" />
+          <div class="company-form-actions"><button id="saveCompanyBtn" class="primary-btn" type="submit">Create company &amp; Sheet</button><button id="cancelCompanyBtn" class="text-btn" type="button">Cancel</button></div>
+          <p id="companyFormStatus" class="small" role="status"></p>
+        </form>
+        <div id="newCompanySheet" class="success-panel hidden"><strong>Company Sheet ready</strong><a id="newCompanySheetLink" class="secondary-btn" target="_blank" rel="noopener">Open Sheet ↗</a><button id="copyCompanySheetBtn" class="secondary-btn" type="button">Copy Sheet link</button><p class="small muted">Open the Sheet and tap Share to give the company access before forwarding the link.</p></div>
         <div id="companyCards" class="company-cards"></div>
         <button id="refreshCompaniesBtn" class="text-btn" type="button">Refresh companies</button>
       </section>

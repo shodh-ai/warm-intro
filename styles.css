@@ -1632,3 +1632,12 @@ body { font-size: 18px; }
 .company-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 20px 0; }
 .company-bar strong { display: block; font-size: 23px; overflow-wrap: anywhere; }
 @media (max-width: 760px) { .company-picker { margin-top: 20px; } .company-picker h1 { font-size: 28px; } .company-bar { padding-top: 0; } }
+
+.company-tile { border: 1px solid var(--line); border-radius: 18px; background: var(--card); overflow: hidden; }
+.company-tile .company-card { border: 0; width: 100%; border-radius: 0; }
+.company-sheet-actions, .company-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.company-sheet-actions { padding: 0 26px 14px; }
+.company-sheet-actions a { display: inline-flex; align-items: center; text-decoration: none; }
+#addCompanyForm { max-width: 560px; margin-top: 20px; }
+#companyFormStatus:empty { display: none; }
+#newCompanySheet p { flex-basis: 100%; }

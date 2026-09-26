@@ -1,3 +1,4 @@
+import { createCompany } from '../_lib/create-company.js';
 import { accessTokenFromSession, googleFetch, updateGoogleSession } from '../_lib/google.js';
 import { DEFAULT_SETTINGS, HEADERS } from '../_lib/data.js';
 import { requireAppAuth } from '../_lib/security.js';
@@ -8,6 +9,7 @@ export default async function handler(req, res) {
   try {
     const { accessToken, session } = await accessTokenFromSession(req, res);
     if (!accessToken) return res.status(401).json({ error: 'Connect Google first' });
+    if (req.body?.companyName !== undefined) return await createCompany(req, res, accessToken, session);
 
     const created = await googleFetch('https://sheets.googleapis.com/v4/spreadsheets', accessToken, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

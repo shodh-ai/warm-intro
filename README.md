@@ -185,3 +185,12 @@ saved text below a forwarded-message separator. Optional `forwarded_from` and
 `forwarded_to` settings supply known source details; no original date or subject
 is invented. This recreates the saved message in a new draft, not a Gmail
 message forward, and does not fetch the original email or its attachments.
+
+
+Use **Add company** on the company picker to create a new blank tracker in the
+connected Google account and register it in the existing Companies tab. Each
+card offers **Open Sheet** and **Copy Sheet link**. Before forwarding a link,
+open Google Sheets and use Share to grant the company access. Creation does not
+make the Sheet public or send a message. Company-specific email text starts
+blank, while the contact headers, formulas and Settings keys are prefilled.
+If registration fails after creation, Retry linking reuses that Sheet.
